@@ -58,7 +58,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56b145d2b9ee1ac4f846968484e7485a, type: 3}
   m_Name: ContactShadows
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   quality:
     m_OverrideState: 0
     m_Value: 1
@@ -94,7 +94,7 @@ MonoBehaviour:
     m_Value: 0.15
   m_SampleCount:
     m_OverrideState: 0
-    m_Value: 10
+    m_Value: 8
 --- !u!114 &-4841009868130627
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -163,10 +163,10 @@ MonoBehaviour:
     m_Value: 1
   upperHemisphereLuxValue:
     m_OverrideState: 1
-    m_Value: 0.46607146
+    m_Value: 0.015006135
   upperHemisphereLuxColor:
     m_OverrideState: 1
-    m_Value: {x: 0.18750615, y: 0.29181966, z: 0.5}
+    m_Value: {x: 0.4508142, y: 0.27205408, z: 0.5}
   desiredLuxValue:
     m_OverrideState: 0
     m_Value: 20000
@@ -181,7 +181,7 @@ MonoBehaviour:
     m_Value: 0
   hdriSky:
     m_OverrideState: 1
-    m_Value: {fileID: 8900000, guid: 8253d41e6e8b11a4cbe77a4f8f82934d, type: 3}
+    m_Value: {fileID: 8900000, guid: ea75323f20e3eaa4ea6cd5ae9763e5bd, type: 3}
   distortionMode:
     m_OverrideState: 0
     m_Value: 0
@@ -321,10 +321,10 @@ MonoBehaviour:
     m_Value: 1
   cloudType:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: 1
   skyAmbientMode:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: 1
   windOrientation:
     m_OverrideState: 0
     m_Value: 0
@@ -349,7 +349,7 @@ MonoBehaviour:
   active: 1
   mode:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 3
   meteringMode:
     m_OverrideState: 0
     m_Value: 2
@@ -377,16 +377,34 @@ MonoBehaviour:
         time: -10
         value: -10
         inSlope: 0
-        outSlope: 1
+        outSlope: 0
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
+        time: -6.8203773
+        value: -9.602295
+        inSlope: 1.0000001
+        outSlope: 1.0000001
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 4.418781
+        value: 16.000889
+        inSlope: 0.12888257
+        outSlope: 0.12888257
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
         time: 20
         value: 20
         inSlope: 1
-        outSlope: 0
+        outSlope: 1
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
@@ -502,8 +520,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 1
   rayTracing:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   intensity:
     m_OverrideState: 1
     m_Value: 0.5
@@ -547,10 +565,10 @@ MonoBehaviour:
     m_Value: 0
   m_MaximumRadiusInPixels:
     m_OverrideState: 0
-    m_Value: 40
+    m_Value: 32
   m_BilateralUpsample:
     m_OverrideState: 0
-    m_Value: 1
+    m_Value: 0
   m_DirectionCount:
     m_OverrideState: 0
     m_Value: 2
@@ -651,7 +669,7 @@ MonoBehaviour:
   active: 1
   maxShadowDistance:
     m_OverrideState: 1
-    m_Value: 150
+    m_Value: 75
   directionalTransmissionMultiplier:
     m_OverrideState: 0
     m_Value: 1

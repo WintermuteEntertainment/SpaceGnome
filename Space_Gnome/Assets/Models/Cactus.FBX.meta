@@ -13,7 +13,7 @@ ModelImporter:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Cactus_01_Cactus_AlbedoTransparency
-    second: {fileID: 2800000, guid: 45133b54fb6be534ebd8ed8ceed29eb9, type: 3}
+    second: {fileID: 2800000, guid: 48f7a7511becb6d40a5e2285ebedca38, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -50,6 +50,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1

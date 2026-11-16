@@ -67,6 +67,7 @@ public class Spawner : MonoBehaviour
         if (!spawningAllowed)
         {
             return;
+            isSpawned = false; //Still unused.
         }
         else
         { if (isColliding) { SpawnObject(); SpawnAsteroid(); } }
@@ -105,6 +106,7 @@ public class Spawner : MonoBehaviour
         else { isSpawned = false; }
 
         isColliding = false;
+        isSpawned = true;
     }
 
     [System.Obsolete]

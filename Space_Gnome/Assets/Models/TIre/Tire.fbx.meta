@@ -3,7 +3,12 @@ guid: a1e6cc0a7f6012544a249c960c4e1173
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Untitled-1
+    second: {fileID: 2800000, guid: f943a9772cd822f48b85fc114f7218c1, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -40,6 +45,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1

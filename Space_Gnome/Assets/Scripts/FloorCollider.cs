@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+//using System.Diagnostics;
 using UnityEngine;
 
 public class FloorCollider : MonoBehaviour
@@ -21,7 +23,7 @@ public class FloorCollider : MonoBehaviour
             m_gnomeMovement.ResetStates();
           // m_gnomeMovement.gravity = m_gnomeMovement.defaultGravity;
         }
-        else if(!collision.gameObject.CompareTag("Floor")) { isStanding = false; }
+        //else { isStanding = false; }
     }
     public void OnCollisionExit(Collision collision)
     {
@@ -63,11 +65,13 @@ public class FloorCollider : MonoBehaviour
     }
     private void Update()
     {
-        if (player.transform.position.y - transform.position.y >= 1)
+        if (player.transform.position.y < gameObject.transform.position.y)
         {
-            transform.Translate(Vector3.up, Space.Self);
+            transform.Translate(((player.transform.position.y - transform.position.y) * Vector3.up), Space.Self);
             Debug.Log("Updated Floor Collider Y position.");
             Toolbox.instance.m_gnomeMovement.playerRB.velocity = Vector3.zero;
+            Debug.Log("Set Player RB Velocity to (0,0,0).");
+            floorColliderRB.velocity = Vector3.zero;
             Debug.Log("Set velocity to zero.");
         }
 
