@@ -97,6 +97,9 @@ public class GnomeMovement : MonoBehaviour
     [SerializeField] float groundSkin = 0.05f;
     [Tooltip("Tag of the things he can land on.")]
     [SerializeField] string floorTag = "Floor";
+    [Tooltip("Seconds the ground must be missing before he counts as having left it (coyote time).")]
+    [SerializeField] float groundLossGraceSeconds = 0.2f;
+    float groundMissingFor;
     CapsuleCollider bodyCollider;
     FallDamage fallDamageTracker;
 
@@ -323,19 +326,34 @@ public class GnomeMovement : MonoBehaviour
         return found;
     }
 
+    // The surface he is standing on (null in the air). Platforms uses it so cleanup never
+    // removes the platform under him.
+    public Collider CurrentGround { get; private set; }
+
     void Land()
     {
         if (m_floorCollider.isStanding) return;
         m_floorCollider.isStanding = true;
         verticalVelocity = 0f;
         ResetStates();
+
+        // GDD 3.2.2: landing on a platform interrupts any combo in progress. Combos are built
+        // by dancing on a platform and cashed in on coins collected before the next landing.
+        Debug.Log("Landed on '" + (CurrentGround != null ? CurrentGround.name : "?") + "' at y " + transform.position.y.ToString("0.00") +
+                  ", t " + Time.time.ToString("0.00") + (comboCount > 0 ? ". Combo x" + comboCount + " interrupted." : "."));
+        comboCount = 0;
+        if (Toolbox.instance.m_coins != null) Toolbox.instance.m_coins.ResetCombo();
         if (fallDamageTracker != null) fallDamageTracker.OnLanded(transform.position.y);
     }
 
     void LeaveGround(bool jumped)
     {
         if (!m_floorCollider.isStanding) return;
+        Debug.Log("Left ground: " + (jumped ? "jumped" : "no ground under him (walked off, or ground lost)") +
+                  " from '" + (CurrentGround != null ? CurrentGround.name : "?") + "' at y " + transform.position.y.ToString("0.00") +
+                  ", t " + Time.time.ToString("0.00"));
         m_floorCollider.isStanding = false;
+        CurrentGround = null;
         if (fallDamageTracker != null) fallDamageTracker.OnLeftGround(transform.position.y);
         if (!jumped) FallingIdle(); // walked off the edge or the platform went away
     }
@@ -343,9 +361,22 @@ public class GnomeMovement : MonoBehaviour
     void HandleGround()
     {
         if (verticalVelocity > 0f) return; // rising: not on the ground
-        bool groundBelow = CastDown(groundSkin + 0.15f, out _);
-        if (m_floorCollider.isStanding && !groundBelow) LeaveGround(false);
-        else if (!m_floorCollider.isStanding && groundBelow) Land();
+        bool groundBelow = CastDown(groundSkin + 0.15f, out RaycastHit hit);
+        if (groundBelow) CurrentGround = hit.collider;
+
+        // Coyote time: only count as having left the ground after it has been missing for
+        // groundLossGraceSeconds. A one-frame blip (an asteroid bump, a physics nudge) used to make
+        // him "leave" and "land" again while standing still, and the landing reset the combo.
+        if (m_floorCollider.isStanding && !groundBelow)
+        {
+            groundMissingFor += Time.deltaTime;
+            if (groundMissingFor >= groundLossGraceSeconds) LeaveGround(false);
+        }
+        else
+        {
+            groundMissingFor = 0f;
+            if (!m_floorCollider.isStanding && groundBelow) Land();
+        }
     }
 
     // Fall one frame, stopping on top of the first platform in the way.
@@ -356,6 +387,7 @@ public class GnomeMovement : MonoBehaviour
         if (CastDown(step + groundSkin, out RaycastHit ground))
         {
             transform.Translate(Vector3.down * Mathf.Max(0f, ground.distance - groundSkin), Space.World);
+            CurrentGround = ground.collider;
             Land();
         }
         else

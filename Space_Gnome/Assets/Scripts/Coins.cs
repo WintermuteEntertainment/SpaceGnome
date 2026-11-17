@@ -131,8 +131,9 @@ public class Coins : MonoBehaviour
         // Stop the same coin being collected twice before Destroy takes effect.
         if (collision.collider != null) collision.collider.enabled = false;
 
-        // Combo multiplier: 1 with no dance moves chained, up to 5.
-        int multiplier = Mathf.Clamp(danceBonus + 1, 1, 5);
+        // Combo bonus = number of dance moves chained (Tim, 2026-11-17): 3 moves = +3. At least +1
+        // (no combo), at most +5. 2023/early-2026 used danceBonus + 1, so 3 moves gave x4.
+        int multiplier = Mathf.Clamp(m_gnomeMovement != null ? m_gnomeMovement.comboCount : danceBonus, 1, 5);
 
         // Time coins show the exact seconds added under the timer instead of the +N sprite, since
         // their value shrinks with every time coin collected this round.
@@ -164,7 +165,7 @@ public class Coins : MonoBehaviour
             case "Coin3": // TIME (BRONZE)
                 float seconds = timeCoinBaseSeconds * Mathf.Pow(timeCoinDecay, totalTimeCoinsCollected) * multiplier;
                 Toolbox.instance.m_timer.AddTime(seconds);
-                ShowTimeGain(seconds);
+                ShowTimeGain(seconds, multiplier);
                 totalTimeCoinsCollected += 1;
                 gotATime = true;
                 Toolbox.instance.m_audio.timeCoin.Play();
@@ -181,7 +182,7 @@ public class Coins : MonoBehaviour
     }
 
     // "+2.6 s" just under the timer: rises for a second, then fades out and is destroyed.
-    void ShowTimeGain(float seconds)
+    void ShowTimeGain(float seconds, int multiplier)
     {
         var timerText = Toolbox.instance.m_timer != null ? Toolbox.instance.m_timer.TimerText : null;
         if (timerText == null) { Debug.Log("Time coin added " + seconds.ToString("0.0") + " s (no timer text to show it next to)."); return; }
@@ -203,7 +204,8 @@ public class Coins : MonoBehaviour
         label.alignment = timerText.alignment;
         label.color = new Color(0.55f, 1f, 0.55f, 1f);
         label.raycastTarget = false;
-        label.text = "+" + seconds.ToString("0.0") + " s";
+        // Time coins have no +N sprite, so show the combo multiplier here when there is one.
+        label.text = "+" + seconds.ToString("0.0") + " s" + (multiplier > 1 ? "  x" + multiplier : "");
         StartCoroutine(RiseFadeAndDestroy(label, 1f, 0.6f));
     }
 
@@ -316,6 +318,13 @@ public class Coins : MonoBehaviour
             ResetCombos();
         }
     }
+    // Clears the coin multiplier (called when the gnome lands, GDD 3.2.2).
+    public void ResetCombo()
+    {
+        danceBonus = 0;
+        ResetCombos();
+    }
+
     void ResetCombos()
     {
         combo1 = false;
