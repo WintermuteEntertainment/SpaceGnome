@@ -1,0 +1,50 @@
+# Unity project lives in Space_Gnome/. Patterns are unanchored so they match there.
+# Replaces the 2023 .gitignore (38,205 lines, 4 MB), which had accidentally grown to
+# ignore Packages/manifest.json and every ProjectSettings file. The original is kept
+# untouched at D:\SpaceGnome_Recovery\sources\SG2023_SpaceGnomeRemastered_2023-11-09\.gitignore
+
+# Unity-generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# IDE and solution files Unity regenerates
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crash and build reports
+sysinfo.txt
+crashlytics-build.properties
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df1f43cd08eb9f94ba3406679fc63016, type: 3}
+  m_Name: DialogueTextObject
+  m_EditorClassIdentifier: 
+  dialogueStringArray:
+  - 'You''re Space Gnome, falling through space toward Earth. Grab coins, dodge asteroids and score big before time runs out. (A / Enter: next. B / Backspace: skip.)'
+  - 'Steer with the left stick (WASD). Turn with the right stick (mouse). In the air, press X (P) to drop a platform below you. It costs boost.'
+  - 'Fall too far before landing and you lose HP, so use platforms to break long falls.'
+  - 'On a platform, A (Space) jumps. Hold A in the air, even while falling, to fly up on boost. Hold B (Shift) while moving to run.'
+  - 'Tap Y (Ctrl) to dance. Hold Y to get ready to breakdance, then hold LT, RT, LB or RB (arrow keys) for four moves.'
+  - 'Chain breakdance moves to build a coin bonus: 3 moves = +3, up to +5. Your next coin gets it, then it resets. Landing resets it too. Dancing also refills boost.'
+  - 'Hold Y and B together for a second stance and the advanced moves: tap LB, LT or RB, or press RT (arrow keys).'
+  - 'Gold coins give points, silver coins give HP, bronze coins give extra time. Each time coin gives a little less than the last.'
+  - 'Asteroids hurt you in the air, or if one lands on your head. Run out of HP or time and it''s game over.'
+  - 'Score = points x HP x a bonus for how long you lasted. Pause with Start (Esc). Press Y (T) there to see this again.'
