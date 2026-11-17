@@ -73,7 +73,12 @@ public class Platforms : MonoBehaviour
         var pm = Toolbox.instance.m_playerManager;
         if (pm != null)
         {
-            if (pm.boost < boostCost) { Debug.Log("Not enough boost for a platform (" + pm.boost.ToString("0") + " / " + boostCost + ")."); return; }
+            if (pm.boost < boostCost)
+            {
+                Debug.Log("Not enough boost for a platform (" + pm.boost.ToString("0") + " / " + boostCost + ").");
+                pm.FlashBoostWarning(); // so a refused press is visible, not silent
+                return;
+            }
             pm.boost -= boostCost;
         }
 
@@ -113,6 +118,7 @@ public class Platforms : MonoBehaviour
 
             spawned.RemoveAt(i);
             spawnTime.Remove(p);
+            Debug.Log("Removed platform '" + p.name + "' (" + (tooMany ? "over the limit of " + maxPlatforms : "older than " + lifetimeSeconds + " s") + ").");
             Despawn(p);
             i--;
         }

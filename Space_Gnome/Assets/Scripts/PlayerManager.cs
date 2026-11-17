@@ -35,16 +35,39 @@ public class PlayerManager : MonoBehaviour
         score = defaultScore;
         
     }
-    public void GameOver()
-    { 
-        player.SetActive(false);
+    bool isGameOver;
 
-        if (Toolbox.instance.m_highScores.newScore > (PlayerPrefs.GetFloat("HighScore")))
+    public void GameOver()
+    {
+        // 2026: runs once (Coins called it every frame while HP was 0), freezes the score, and
+        // saves the high score explicitly. 2023 never called PlayerPrefs.Save(), compared a score
+        // that kept growing, and old negative scores from the previous formula could sit in the
+        // store (the Editor registry held -2.0).
+        if (isGameOver) return;
+        isGameOver = true;
+
+        score = ComputeScore();
+        if (Toolbox.instance.m_highScores != null) Toolbox.instance.m_highScores.newScore = score;
+
+        float best = Mathf.Max(0f, PlayerPrefs.GetFloat("HighScore", 0f));
+        if (score > best)
         {
-            Toolbox.instance.m_highScores.previousHighScore = PlayerPrefs.GetFloat("HighScore");
-            PlayerPrefs.SetFloat("PreviousHighScore", Toolbox.instance.m_highScores.previousHighScore);
-            PlayerPrefs.SetFloat("HighScore", Toolbox.instance.m_highScores.newScore);
+            PlayerPrefs.SetFloat("PreviousHighScore", best);
+            PlayerPrefs.SetFloat("HighScore", score);
+            PlayerPrefs.Save();
+            if (Toolbox.instance.m_highScores != null)
+            {
+                Toolbox.instance.m_highScores.previousHighScore = best;
+                Toolbox.instance.m_highScores.currentHighScore = score;
+            }
+            Debug.Log("New high score " + score.ToString("f0") + " (previous " + best.ToString("f0") + "), saved.");
         }
+        else
+        {
+            Debug.Log("Score " + score.ToString("f0") + " is not a high score (best " + best.ToString("f0") + ").");
+        }
+
+        player.SetActive(false);
 
         pointsCoinsCollectedText.text = Toolbox.instance.m_coins.totalPointsCoinsCollected.ToString();
         hPCoinsCollectedText.text = Toolbox.instance.m_coins.totalHealthCoinsCollected.ToString();
@@ -57,8 +80,8 @@ public class PlayerManager : MonoBehaviour
 
 
         Toolbox.instance.m_uIManager.gameOverPanel.SetActive(true);
-        Toolbox.instance.m_uIManager.highScoreText.text = PlayerPrefs.GetFloat("HighScore").ToString("f0");
-        Toolbox.instance.m_uIManager.previousHighScoreText.text = PlayerPrefs.GetFloat("PreviousHighScore").ToString("f0");
+        Toolbox.instance.m_uIManager.highScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("HighScore")).ToString("f0");
+        Toolbox.instance.m_uIManager.previousHighScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("PreviousHighScore")).ToString("f0");
         Debug.Log("Game over, man!");
         Debug.Log("Score was " + score + " at Game Over.");
        
@@ -76,8 +99,30 @@ public class PlayerManager : MonoBehaviour
         }
         if (boost<= 0) { boost= 0; }
 
-        score = ComputeScore();
+        if (!isGameOver) score = ComputeScore(); // frozen once the round is over
     }
+
+    // Brief red flash on the boost number, e.g. when a platform is refused for lack of boost.
+    public void FlashBoostWarning()
+    {
+        if (boostText == null) return;
+        StopCoroutine(nameof(BoostWarning));
+        StartCoroutine(nameof(BoostWarning));
+    }
+
+    IEnumerator BoostWarning()
+    {
+        if (!boostColorKnown) { boostNormalColor = boostText.color; boostColorKnown = true; }
+        for (int i = 0; i < 3; i++)
+        {
+            boostText.color = Color.red;
+            yield return new WaitForSecondsRealtime(0.12f);
+            boostText.color = boostNormalColor;
+            yield return new WaitForSecondsRealtime(0.08f);
+        }
+    }
+    Color boostNormalColor;
+    bool boostColorKnown;
 
     [Header("Score (2026)")]
     [Tooltip("Round-length bonus: score is multiplied by 1 + (seconds survived / this). " +
