@@ -32,10 +32,18 @@ public class Platforms : MonoBehaviour
 
     public void Fire()
     {
-        Instantiate(clone = spawnablePlatforms[Random.Range(0, 5)], player.transform.position - platformSpawnOffset, player.transform.rotation, platformObjectsParent);
+        // 2026 fix: the 2023 line was Instantiate(clone = prefab, ...), which stored the PREFAB in
+        // `clone`, so SetActive and the 90-unit move below were applied to the prefab asset (its
+        // file drifted to y = -26000) while the new platform stayed where it appeared. It also
+        // assumed exactly 5 entries. Same spawn maths as intended, applied to the new platform:
+        // start at player - platformSpawnOffset, then platformSpawnDistance further down.
+        if (spawnablePlatforms == null || spawnablePlatforms.Length == 0) return;
+        var prefab = spawnablePlatforms[Random.Range(0, spawnablePlatforms.Length)];
+        if (prefab == null) return;
+        clone = Instantiate(prefab, player.transform.position - platformSpawnOffset, player.transform.rotation, platformObjectsParent);
         clone.SetActive(true);
-        Debug.Log("Spawned platform.");
         clone.transform.Translate(Vector3.down * platformSpawnDistance, Space.Self);
+        Debug.Log("Spawned platform at " + clone.transform.position + ".");
     }
     //private void Update()
     //{

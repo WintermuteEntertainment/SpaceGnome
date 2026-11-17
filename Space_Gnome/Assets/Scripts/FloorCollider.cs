@@ -12,9 +12,23 @@ public class FloorCollider : MonoBehaviour
 
     [SerializeField] Rigidbody floorColliderRB;
 
- 
+    // 2026: GnomeMovement now decides standing / landing itself by casting the gnome's capsule
+    // (see GnomeMovement.HandleGround / FallStep). These contact callbacks used to do it and are
+    // kept only for reference; they no longer change state unless this is ticked.
+    [SerializeField] bool driveStandingFromContacts = false;
+
+    private void Awake()
+    {
+        // When not used for standing, this box (with its own non-kinematic Rigidbody) only got in
+        // the way: it pressed against the platform and the gnome's own collider and pushed him.
+        if (driveStandingFromContacts) return;
+        foreach (var c in GetComponents<Collider>()) c.enabled = false;
+        if (floorColliderRB != null) floorColliderRB.isKinematic = true;
+    }
+
     public void OnCollisionEnter(Collision collision)
     {
+        if (!driveStandingFromContacts) return;
         if (collision.gameObject.CompareTag("Floor"))
         {
 
@@ -27,7 +41,7 @@ public class FloorCollider : MonoBehaviour
     }
     public void OnCollisionExit(Collision collision)
     {
-
+        if (!driveStandingFromContacts) return;
         if (collision.gameObject.CompareTag("Floor"))
         {
             if (m_gnomeMovement.player1Controls.Player.Jump.triggered /*&& Toolbox.instance.m_gnomeMovement.jumpingAllowed*/)
@@ -65,6 +79,7 @@ public class FloorCollider : MonoBehaviour
     }
     private void Update()
     {
+        if (!driveStandingFromContacts) return; // box is off; GnomeMovement handles the ground
         if (player.transform.position.y < gameObject.transform.position.y)
         {
             transform.Translate(((player.transform.position.y - transform.position.y) * Vector3.up), Space.Self);

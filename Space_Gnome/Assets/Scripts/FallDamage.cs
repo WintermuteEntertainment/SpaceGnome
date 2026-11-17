@@ -27,31 +27,37 @@ public class FallDamage : MonoBehaviour
     [SerializeField] int boostPenalty4;
     [SerializeField] int boostPenalty5;
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        landingHeight = gameObject.transform.position.y;
-        if (collision.gameObject.CompareTag("Floor"))
-        {
-           
-            fallDistance = height - landingHeight;
-            Debug.Log("Fall distance is " + fallDistance + ".");
-            Debug.Log("Landing height is " + landingHeight + " when collidied with 'Floor'.");
+    // 2026 rework. Fall distance = highest point since the gnome last stood (or since the game
+    // started) minus where he lands. GnomeMovement calls OnLeftGround / OnLanded when he really
+    // leaves or lands on a platform. The 2023 version used physics contacts: "height" started at 0
+    // so the first landing counted as a fall from y = 0, and a contact while falling THROUGH a
+    // platform still charged damage.
+    bool airborne = true;
 
-            FallDamageHPDrain();
-        }
-    }
-    private void OnCollisionExit(Collision collision)
+    private void Start()
     {
-        if (collision.gameObject.CompareTag("Floor") )
-        {
-            height = transform.position.y; //Set height based on Y position.
-            Debug.Log("Height on collision exit is " + height);
-        }
-       
+        height = transform.position.y;
     }
+
     private void Update()
     {
-        if (Toolbox.instance.m_gnomeMovement.isJumping) { height = transform.position.y; }
+        if (airborne && transform.position.y > height) height = transform.position.y; // track the peak
+    }
+
+    public void OnLeftGround(float y)
+    {
+        airborne = true;
+        height = y;
+    }
+
+    public void OnLanded(float y)
+    {
+        if (!airborne) return;
+        airborne = false;
+        landingHeight = y;
+        fallDistance = height - landingHeight;
+        Debug.Log("Landed. Fell " + fallDistance.ToString("0.0") + " (from " + height.ToString("0.0") + " to " + landingHeight.ToString("0.0") + ").");
+        FallDamageHPDrain();
     }
     public void FallDamageHPDrain()
     {

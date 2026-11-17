@@ -6,6 +6,7 @@ using UnityEngine;
 public class Timer : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI timerText; //Timer text object.
+    public TextMeshProUGUI TimerText => timerText;
     public float startTime;     //Time to start countdown timer at.
     public float timerTime;     //Timer current time.
 
@@ -55,5 +56,14 @@ public class Timer : MonoBehaviour
     public void TimerPause()
     {
         timerPaused = true;
+    }
+
+    // Extend the round. The countdown is measured against startTime, so that is what has to move;
+    // changing timerTime after Start() (as the 2023 time coins did) had no effect.
+    public void AddTime(float seconds)
+    {
+        if (timerFinished || seconds <= 0f) return;
+        startTime += seconds;
+        timerTime += seconds; // kept in step for anything that displays it
     }
 }

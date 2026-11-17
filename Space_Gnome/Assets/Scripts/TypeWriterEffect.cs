@@ -5,28 +5,33 @@ using TMPro;
 
 public class TypeWriterEffect : MonoBehaviour
 {
-   [SerializeField] float typeWriterSpeed;
+   [SerializeField] float typeWriterSpeed;   // characters per second
    public Coroutine RunTextCoRoutine(string textToType, TMP_Text textLabel)
     {
         return StartCoroutine(TypeText(textToType,textLabel));
     }
+
+    public void StopTyping(Coroutine typing)
+    {
+        if (typing != null) StopCoroutine(typing);
+    }
+
     private IEnumerator TypeText(string textToType, TMP_Text textLabel)
     {
         textLabel.text = string.Empty;
-     //   yield return new WaitForSeconds(1);
         float t = 0;
         int charIndex = 0;
 
-        while(charIndex< textToType.Length) 
+        while(charIndex< textToType.Length)
         {
-
-            t += Time.deltaTime *typeWriterSpeed;
+            // 2026: unscaled time, so text still types while gameplay is frozen (menus, tutorial).
+            t += Time.unscaledDeltaTime *typeWriterSpeed;
             charIndex = Mathf.FloorToInt(t);
             charIndex= Mathf.Clamp(charIndex,0, textToType.Length);
 
-            textLabel.text =  textToType.Substring(0,charIndex);    
+            textLabel.text =  textToType.Substring(0,charIndex);
             yield return null;
         }
-        textLabel.text = textToType;    
+        textLabel.text = textToType;
     }
 }

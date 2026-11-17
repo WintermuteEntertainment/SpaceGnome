@@ -79,340 +79,163 @@ public class Coins : MonoBehaviour
         hPCoinTextObject.SetActive(false);
         timeCoinTextObject.SetActive(false);
     }
+    [Header("+N number display (2026)")]
+    [SerializeField] float plusHoldSeconds = 1f;
+    [SerializeField] float plusFadeSeconds = 0.5f;
+
+    // Show exactly one +N number: hide the others, then hold `amount`'s number for plusHoldSeconds
+    // and fade it out. 2023 bugs this replaces: the Time coin branch never faded/hid its number
+    // (code commented out), and DOTween.Kill(plusN) targeted the GameObjects while the fades ran on
+    // their SpriteRenderers, so old fades kept running and numbers overlapped.
+    void ShowPlus(int amount)
+    {
+        GameObject[] all = { plus1, plus2, plus3, plus4, plus5 };
+        foreach (var go in all)
+        {
+            if (go == null) continue;
+            var r = go.GetComponent<SpriteRenderer>();
+            if (r != null) r.DOKill();
+            go.SetActive(false);
+        }
+        if (amount < 1) return;
+
+        var shown = all[Mathf.Clamp(amount, 1, 5) - 1];
+        if (shown == null) return;
+        shown.SetActive(true);
+        var sr = shown.GetComponent<SpriteRenderer>();
+        if (sr == null) return;
+        var c = sr.color; c.a = 1f; sr.color = c;
+        sr.DOFade(0f, plusFadeSeconds).SetDelay(plusHoldSeconds).OnComplete(() => shown.SetActive(false));
+    }
+
+    [Header("Coin rewards (2026)")]
+    [Tooltip("Points per points coin, times the combo multiplier (1-5): 1000-5000.")]
+    [SerializeField] int pointsPerCoin = 1000;
+    [Tooltip("HP per health coin, times the combo multiplier (1-5).")]
+    [SerializeField] int hpPerCoin = 1;
+    [Tooltip("Seconds the FIRST time coin of a round adds, times the combo multiplier.")]
+    [SerializeField] float timeCoinBaseSeconds = 3f;
+    [Tooltip("Each later time coin is worth this fraction of the one before (diminishing returns). " +
+             "Total time a round can ever gain = base x multiplier / (1 - this): at 3 s and 0.85, " +
+             "20 s at x1 and 100 s at x5, so a round cannot last forever.")]
+    [SerializeField, Range(0.5f, 0.99f)] float timeCoinDecay = 0.85f;
+
+    // 2026 rewrite of coin pickup. The 2023 version: points coins gave 1-5 points, health coins
+    // added the combo bonus twice, and time coins added to Timer.timerTime, which the timer only
+    // reads once at the start, so they never extended the round.
     private void OnCollisionEnter(Collision collision)
     {
-        // Check if the collided object is a coin
-        if (collision.gameObject.CompareTag("Coin1") ||
-            collision.gameObject.CompareTag("Coin2") ||
-            collision.gameObject.CompareTag("Coin3"))
+        string coinTag = collision.gameObject.tag;
+        if (coinTag != "Coin1" && coinTag != "Coin2" && coinTag != "Coin3") return;
 
+        // Stop the same coin being collected twice before Destroy takes effect.
+        if (collision.collider != null) collision.collider.enabled = false;
+
+        // Combo multiplier: 1 with no dance moves chained, up to 5.
+        int multiplier = Mathf.Clamp(danceBonus + 1, 1, 5);
+
+        // Time coins show the exact seconds added under the timer instead of the +N sprite, since
+        // their value shrinks with every time coin collected this round.
+        if (coinTag != "Coin3") ShowPlus(multiplier); else ShowPlus(0);
+        ShowCoinType(coinTag);
+
+        switch (coinTag)
         {
-            // Increment the dance bonus by 1 and adjust if it's greater than 5.
-            danceBonus++;
+            case "Coin1": // POINTS (GOLD)
+                int pointsGained = pointsPerCoin * multiplier;
+                points += pointsGained;
+                totalPointsCoinsCollected += 1;
+                gotAPoint = true;
+                pointsText.text = points.ToString();
+                Toolbox.instance.m_audio.pointsCoin.Play();
+                Debug.Log("Points coin: +" + pointsGained + " (x" + multiplier + "). Points " + points + ".");
+                break;
 
-            if (danceBonus > 5) { danceBonus = 5; }
+            case "Coin2": // HEALTH (SILVER)
+                int hpGained = hpPerCoin * multiplier;
+                hP += hpGained;
+                totalHealthCoinsCollected += 1;
+                gotAHP = true;
+                hPText.text = hP.ToString();
+                Toolbox.instance.m_audio.hPCoin.Play();
+                Debug.Log("Health coin: +" + hpGained + " HP (x" + multiplier + "). HP " + hP + ".");
+                break;
 
-            // Stop all existing tweens on the plus GameObjects
-            DOTween.Kill(plus1);
-            DOTween.Kill(plus2);
-            DOTween.Kill(plus3);
-            DOTween.Kill(plus4);
-            DOTween.Kill(plus5);
-
-            // Activate the appropriate plus GameObject based on the dance bonus
-            switch (danceBonus)
-            {
-                case 1:
-                    plus1.SetActive(true);
-                    //plus1.transform.DOScale(Vector3.one, 1f).From().OnComplete(() => plus1.SetActive(false));
-                    plus1.GetComponent<SpriteRenderer>().DOFade(.5f, 1f).From();
-                    break;
-                case 2:
-                    plus2.SetActive(true);
-                    //plus2.transform.DOScale(Vector3.one, 1f).From().OnComplete(() => plus2.SetActive(false));
-                    plus2.GetComponent<SpriteRenderer>().DOFade(.5f, 1f).From();
-                    break;
-                case 3:
-                    plus3.SetActive(true);
-                    //plus3.transform.DOScale(Vector3.one, 1f).From().OnComplete(() => plus3.SetActive(false));
-                    plus3.GetComponent<SpriteRenderer>().DOFade(.5f, 1f).From();
-                    break;
-                case 4:
-                    plus4.SetActive(true);
-                    //plus4.transform.DOScale(Vector3.one, 1f).From().OnComplete(() => plus4.SetActive(false));
-                    plus4.GetComponent<SpriteRenderer>().DOFade(.5f, 1f).From();
-                    break;
-                case 5:
-                    plus5.SetActive(true);
-                    //plus5.transform.DOScale(Vector3.one, 1f).From().OnComplete(() => plus5.SetActive(false));
-                    plus5.GetComponent<SpriteRenderer>().DOFade(1f, 0.5f).From();
-                    break;
-            }
-
-            // Get the collided coin's tag
-            string collidedCoinTag = collision.gameObject.tag;
-
-            // Activate the corresponding UI element based on the collided coin's tag
-            switch (collidedCoinTag)
-            {
-                case "Coin1":
-                    pointsCoinTextObject.SetActive(true);
-                    pointsCoinTextObject.transform.DOScale(Vector3.one, 0.5f).From().OnComplete(() => pointsCoinTextObject.SetActive(false));
-                    pointsCoinTextObject.GetComponent<SpriteRenderer>().DOFade(1f, 0.5f).From();
-                    break;
-                case "Coin2":
-                    hPCoinTextObject.SetActive(true);
-                    hPCoinTextObject.transform.DOScale(Vector3.one, 0.5f).From().OnComplete(() => hPCoinTextObject.SetActive(false));
-                    hPCoinTextObject.GetComponent<SpriteRenderer>().DOFade(1f, 0.5f).From();
-                    break;
-                case "Coin3":
-                    timeCoinTextObject.SetActive(true);
-                    timeCoinTextObject.transform.DOScale(Vector3.one, 0.5f).From().OnComplete(() => timeCoinTextObject.SetActive(false));
-                    timeCoinTextObject.GetComponent<SpriteRenderer>().DOFade(1f, 0.5f).From();
-                    break;
-            }
-
-        }
-        //POINTS (GOLD) COIN
-        if (collision.gameObject.CompareTag("Coin1"))
-        {
-            //Create and initialize an int called pointsGained and clamp it to between 0 and 5.
-
-            int pointsGained = Mathf.Clamp(danceBonus, 0, 5);
-            if (pointsGained >= 1) { pointsGained = danceBonus; points += pointsGained; } //If any dance bonus, set the pointGained variable to it, and then add it to the points..
-            else {
-                points += 1;
-                Debug.Log("Gained a single point (Dance bonus is " + danceBonus + ".");  //else just add a single point.
-            }
-
-            Debug.Log("Got " + pointsGained + " points. Dance bonus currently " + danceBonus + ".");
-
-            SpriteRenderer plusText = null;                             //Create variables to hold the sprite renderers from UI_Manager script.
-            SpriteRenderer coinTypeTextSprite = null;
-
-            switch (pointsGained)               //Depending on the amount of points gained, switch case to appropriate sprite renderer.
-            {
-                case 1:
-                    plusText = Toolbox.instance.m_uIManager.plus1;
-                    break;
-                case 2:
-                    plusText = Toolbox.instance.m_uIManager.plus2;
-                    break;
-                case 3:
-                    plusText = Toolbox.instance.m_uIManager.plus3;
-                    break;
-                case 4:
-                    plusText = Toolbox.instance.m_uIManager.plus4;
-                    break;
-                case 5:
-                    plusText = Toolbox.instance.m_uIManager.plus5;
-                    break;
-            }
-
-            if (plusText != null)
-            {
-                plusText.gameObject.SetActive(true);            ///Set the plus text sprite game object to active, then perform animations that reset the object to false once animation has played..
-                plusText.DOFade(0.5f, 1f).SetDelay(1.5f).OnComplete(() =>
-                {
-                    plusText.gameObject.SetActive(false);
-                });
-            }
-            if (coinTypeTextSprite != null)                     ///Set the coin type sprite game object to active, then perform animations that reset the object to false once animation has played..
-            {
-                coinTypeTextSprite.gameObject.SetActive(true);
-                coinTypeTextSprite.DOFade(.5f, 1).SetDelay(1.5f).OnComplete(() =>
-                {
-                    coinTypeTextSprite.gameObject.SetActive(false);
-                });
-            }
-
-        totalPointsCoinsCollected += 1;     //Add 1 to the total points coins collected, set the point coin boolean to true, and update the points UI with the current SCORE (NOTE THIS NEEDS WORK!!!)..
-        Debug.Log("Got a point.");
-        gotAPoint = true;
-        pointsText.text = points.ToString();
-
-        if (collision.gameObject.CompareTag("Coin1")) {         //Finally, destroy the collided coin game objecty and play the appropriate SFX. Probably a good place to add particles too.
-            Destroy(collision.gameObject);
-
-            //FX
-            Toolbox.instance.m_audio.pointsCoin.Play();
+            case "Coin3": // TIME (BRONZE)
+                float seconds = timeCoinBaseSeconds * Mathf.Pow(timeCoinDecay, totalTimeCoinsCollected) * multiplier;
+                Toolbox.instance.m_timer.AddTime(seconds);
+                ShowTimeGain(seconds);
+                totalTimeCoinsCollected += 1;
+                gotATime = true;
+                Toolbox.instance.m_audio.timeCoin.Play();
+                Debug.Log("Time coin #" + totalTimeCoinsCollected + ": +" + seconds.ToString("0.0") + " s (x" + multiplier + ").");
+                break;
         }
 
-        //Reset dance bonus and combo count after collecting a coin.
+        Destroy(collision.gameObject);
+
+        // Reset coin pickup bonuses from dance combos after collecting a coin.
         danceBonus = 0;
         m_gnomeMovement.comboCount = 0;
-        combo1 = false; combo2 = false; combo3 = false; combo4 = false; combo5 = false;
+        ResetCombos();
+    }
 
-            // Deactivate the previous plus GameObject (if any)
-            int previousBonus = danceBonus - 1;
-            switch (previousBonus)
+    // "+2.6 s" just under the timer: rises for a second, then fades out and is destroyed.
+    void ShowTimeGain(float seconds)
+    {
+        var timerText = Toolbox.instance.m_timer != null ? Toolbox.instance.m_timer.TimerText : null;
+        if (timerText == null) { Debug.Log("Time coin added " + seconds.ToString("0.0") + " s (no timer text to show it next to)."); return; }
+
+        var go = new GameObject("TimeGainPopup", typeof(RectTransform));
+        go.transform.SetParent(timerText.transform.parent, false);
+        var rt = (RectTransform)go.transform;
+        var src = timerText.rectTransform;
+        rt.anchorMin = src.anchorMin;
+        rt.anchorMax = src.anchorMax;
+        rt.pivot = src.pivot;
+        rt.sizeDelta = src.sizeDelta;
+        rt.anchoredPosition = src.anchoredPosition + new Vector2(0f, -src.rect.height);
+
+        var label = go.AddComponent<TextMeshProUGUI>();
+        // TMP's default font: the timer's font (Damage Inc) is missing characters such as - and :
+        label.font = TMP_Settings.defaultFontAsset != null ? TMP_Settings.defaultFontAsset : timerText.font;
+        label.fontSize = timerText.fontSize * 0.8f;
+        label.alignment = timerText.alignment;
+        label.color = new Color(0.55f, 1f, 0.55f, 1f);
+        label.raycastTarget = false;
+        label.text = "+" + seconds.ToString("0.0") + " s";
+        StartCoroutine(RiseFadeAndDestroy(label, 1f, 0.6f));
+    }
+
+    IEnumerator RiseFadeAndDestroy(TMP_Text label, float holdSeconds, float fadeSeconds)
+    {
+        float t = 0f;
+        while (t < holdSeconds + fadeSeconds && label != null)
+        {
+            t += Time.unscaledDeltaTime;
+            label.rectTransform.anchoredPosition += Vector2.up * 25f * Time.unscaledDeltaTime;
+            if (t > holdSeconds)
             {
-                case 1:
-                    plus1.SetActive(false);
-                    break;
-                case 2:
-                    plus2.SetActive(false);
-                    break;
-                case 3:
-                    plus3.SetActive(false);
-                    break;
-                case 4:
-                    plus4.SetActive(false);
-                    break;
-                case 5:
-                    plus5.SetActive(false);
-                    break;
+                var c = label.color;
+                c.a = 1f - (t - holdSeconds) / fadeSeconds;
+                label.color = c;
             }
+            yield return null;
         }
+        if (label != null) Destroy(label.gameObject);
+    }
 
-            //HEALTH (SILVER) COIN                                              //Perform similar operations but for silver coin type.
-            if (collision.gameObject.CompareTag("Coin2"))
-            {
-                //START PASTED CODE
+    // Pops the coin type label (points / health / time) the same way the 2023 code did.
+    void ShowCoinType(string coinTag)
+    {
+        GameObject label = coinTag == "Coin1" ? pointsCoinTextObject : coinTag == "Coin2" ? hPCoinTextObject : timeCoinTextObject;
+        if (label == null) return;
+        label.SetActive(true);
+        label.transform.DOScale(Vector3.one, 0.5f).From().OnComplete(() => label.SetActive(false));
+        var sr = label.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.DOFade(1f, 0.5f).From();
+    }
 
-                int pointsGained = Mathf.Clamp(danceBonus, 0, 5);
-                hP += pointsGained;
-
-               SpriteRenderer plusText = null;
-                SpriteRenderer coinTypeTextSprite = null;
-
-                switch (pointsGained)
-                {
-                    case 1:
-                        plusText = Toolbox.instance.m_uIManager.plus1;
-                        break;
-                    case 2:
-                        plusText = Toolbox.instance.m_uIManager.plus2;
-                        break;
-                    case 3:
-                        plusText = Toolbox.instance.m_uIManager.plus3;
-                        break;
-                    case 4:
-                        plusText = Toolbox.instance.m_uIManager.plus4;
-                        break;
-                    case 5:
-                        plusText = Toolbox.instance.m_uIManager.plus5;
-                        break;
-                }
-
-                if (plusText != null)
-                {
-                    plusText.gameObject.SetActive(true);
-                    plusText.DOFade(.5f, 1f).SetDelay(1.5f).OnComplete(() =>
-                    {
-                        plusText.gameObject.SetActive(false);
-                    });
-                }
-                if (coinTypeTextSprite != null)
-                {
-                    coinTypeTextSprite.gameObject.SetActive(true);
-                    coinTypeTextSprite.DOFade(.5f, 1f).SetDelay(1.5f).OnComplete(() =>
-                    {
-                        coinTypeTextSprite.gameObject.SetActive(false);
-                    });
-                }
-
-                if (danceBonus >= 1)
-                {
-                    int hpGained = danceBonus;
-                    hP += danceBonus;
-
-
-                    Debug.Log( "Gained " + danceBonus + " HP. HP is currently " + hP + ". Dance bonus currently " + danceBonus + ".");
-                }
-
-                else
-                {
-                    hP += 1;
-                    Debug.Log("Gained a single HP (Dance bonus is " + danceBonus + ".");
-                }
-
-                    totalHealthCoinsCollected += 1;
-                    Debug.Log("Got a HP.");
-                    gotAHP = true;
-                    hPText.text = hP.ToString();
-                    Destroy(collision.gameObject);
-                    Toolbox.instance.m_audio.hPCoin.Play();
-
-                    //Reset coin pickup bonuses from dance combos after collecting a coin.
-                    danceBonus = 0;
-                    m_gnomeMovement.comboCount = 0;
-                    combo1 = false; combo2 = false; combo3 = false; combo4 = false; combo5 = false;
-
-            // Deactivate the previous plus GameObject (if any)
-            int previousBonus = danceBonus - 1;
-            switch (previousBonus)
-            {
-                case 1:
-                    plus1.SetActive(false);
-                    break;
-                case 2:
-                    plus2.SetActive(false);
-                    break;
-                case 3:
-                    plus3.SetActive(false);
-                    break;
-                case 4:
-                    plus4.SetActive(false);
-                    break;
-                case 5:
-                    plus5.SetActive(false);
-                    break;
-            }
-
-        }
-
-            //TIME (BRONZE) COIN
-            if (collision.gameObject.CompareTag("Coin3"))
-            {
-
-                int pointsGained = Mathf.Clamp(danceBonus, 1, 5);
-
-
-                SpriteRenderer plusText = null;
-                SpriteRenderer coinTypeTextSprite = null;
-
-            switch (pointsGained)
-            {
-                case 1:
-                    plusText = Toolbox.instance.m_uIManager.plus1;
-                    break;
-                case 2:
-                    plusText = Toolbox.instance.m_uIManager.plus2;
-                    break;
-                case 3:
-                    plusText = Toolbox.instance.m_uIManager.plus3;
-                    break;
-                case 4:
-                    plusText = Toolbox.instance.m_uIManager.plus4;
-                    break;
-                case 5:
-                    plusText = Toolbox.instance.m_uIManager.plus5;
-                    break;
-            }
-
-            //if (plusText != null)
-            //{
-            //    plusText.gameObject.SetActive(true);
-            //    plusText.DOFade(.5f, 1f).SetDelay(1.5f).OnComplete(() =>
-            //    {
-            //        plusText.gameObject.SetActive(false);
-            //    });
-            //}
-            if (coinTypeTextSprite != null)
-                {
-                    coinTypeTextSprite.gameObject.SetActive(true);
-                    coinTypeTextSprite.DOFade(.5f, 1f).SetDelay(1.5f).OnComplete(() =>
-                    {
-                        coinTypeTextSprite.gameObject.SetActive(false);
-                    });
-                }
-
-                    Debug.Log("Got a time.");
-                    gotATime = true;
-
-                    Toolbox.instance.m_audio.timeCoin.Play();
-                    Destroy(collision.gameObject);
-
-                    totalTimeCoinsCollected += 1;
-
-                    //Add time to timer in timer script depending on how many time coins collected up to 100 total time coins collected.
-
-                    if (totalTimeCoinsCollected <= 25) { Toolbox.instance.m_timer.timerTime += timeBonus; }
-                    else if (totalTimeCoinsCollected > 25 && totalTimeCoinsCollected <= 50) { Toolbox.instance.m_timer.timerTime += timeBonus2; }
-                    else if (totalTimeCoinsCollected > 50 && totalTimeCoinsCollected <= 100) { Toolbox.instance.m_timer.timerTime += timeBonus3; }
-                    else if (totalTimeCoinsCollected > 100) { Toolbox.instance.m_timer.timerTime += timeBonus3;  }
-
-                    //Reset coin pickup bonuses from dance combos after collecting a coin.
-                    danceBonus = 0;
-                    m_gnomeMovement.comboCount = 0;
-                    combo1 = false; combo2 = false; combo3 = false; combo4 = false; combo5 = false;
-
-            
-            }
-           
-        }
-    
     private void OnCollisionExit(Collision collision)       //Reset coin collection bool for appropriate coin when exited collision with that coin type.
     {
         if (collision.gameObject.CompareTag("Coin1"))

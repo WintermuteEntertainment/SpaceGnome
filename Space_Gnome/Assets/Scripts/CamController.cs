@@ -15,6 +15,10 @@ public class CamController : MonoBehaviour
     public GnomeMovement m_gnomeMovement;
     public FloorCollider m_floorCollider;
 
+    [Tooltip("On: landed camera (vCam1, front three-quarter view for dancing) while standing, " +
+             "falling camera (vCam2, above) in the air. Off: vCam2 for everything.")]
+    [SerializeField] bool useStandingCamera = true;
+
     private void Awake()
     {
         player1Controls = new SGInput();
@@ -22,13 +26,18 @@ public class CamController : MonoBehaviour
 
     private void Update()
     {
-        if (m_gnomeMovement.isFallingIdle)
+        // Airborne (falling OR jumping) uses the falling camera. 2023 checked isFallingIdle only,
+        // so during a jump the close standing camera (vCam1) kept filming and lost the gnome.
+        if (!useStandingCamera || m_gnomeMovement.isFallingIdle || (m_floorCollider != null && !m_floorCollider.isStanding))
         {
             if (mainCamera != null)
             {
-                fallingCamera.SetActive(true);
+                // Falling is filmed by vCam2 through the Main Camera's Cinemachine brain.
+                // (2023: this switched to the gnome-parented Falling Camera and turned the
+                // Main Camera off, which the check at the end of Update undid every frame.)
+                if (fallingCamera != null) fallingCamera.SetActive(false);
                 vCam2.SetActive(true);
-                mainCamera.SetActive(false);
+                mainCamera.SetActive(true);
                 vCam1.SetActive(false);
             }
            

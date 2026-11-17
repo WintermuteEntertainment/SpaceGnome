@@ -76,6 +76,22 @@ public class PlayerManager : MonoBehaviour
         }
         if (boost<= 0) { boost= 0; }
 
-        score = (points + (hP / 2)) * (Toolbox.instance.m_uIManager.timeRoundStarted - Time.time); ///timeGamestarted - timeRound started.
+        score = ComputeScore();
+    }
+
+    [Header("Score (2026)")]
+    [Tooltip("Round-length bonus: score is multiplied by 1 + (seconds survived / this). " +
+             "At 60, a 1-minute round is x2 and a 3-minute round is x4.")]
+    [SerializeField] float secondsPerExtraMultiplier = 60f;
+
+    // Score = points x health x round-length multiplier (Tim, 2026-11-17).
+    // 2023 formula was (points + hP/2) * (timeRoundStarted - Time.time), which went negative as
+    // the round went on. Health counts as at least 1, so a round that ends with 0 HP still scores
+    // its points (with HP 0 the product would otherwise always be 0).
+    public float ComputeScore()
+    {
+        float seconds = Mathf.Max(0f, Time.time - Toolbox.instance.m_uIManager.timeRoundStarted);
+        float roundMultiplier = 1f + seconds / Mathf.Max(1f, secondsPerExtraMultiplier);
+        return points * Mathf.Max(hP, 1) * roundMultiplier;
     }
 }
