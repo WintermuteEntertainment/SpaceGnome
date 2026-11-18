@@ -103,6 +103,22 @@ public class GnomeMovement : MonoBehaviour
     CapsuleCollider bodyCollider;
     FallDamage fallDamageTracker;
 
+    [Header("Nose dive (2026)")]
+    [Tooltip("Fall speed multiplier while diving (hold RT / E in the air).")]
+    [SerializeField] float diveSpeedMultiplier = 2.5f;
+    [Tooltip("Boost used per second of diving. Diving stops when boost runs out.")]
+    [SerializeField] float diveBoostPerSecond = 1500f;
+    [Tooltip("How far the model tips head-first while diving (degrees; 90 = flat, 180 = straight down).")]
+    [SerializeField] float diveTiltDegrees = 110f;
+    [Tooltip("How quickly the model tips into / out of the dive pose (fraction per second).")]
+    [SerializeField] float diveTiltSpeed = 5f;
+    InputAction noseDiveAction;
+    public bool IsDiving { get; private set; }
+    float diveBlend;
+    bool modelRestKnown;
+    Vector3 modelRestLocalPos;
+    Quaternion modelRestLocalRot;
+
     [Header("Turning (2026 rework)")]
     [Tooltip("Maximum turn rate from the right stick (degrees/s).")]
     [SerializeField] float turnSpeedDegrees = 240f;
@@ -153,6 +169,12 @@ public class GnomeMovement : MonoBehaviour
 
         bodyCollider = GetComponent<CapsuleCollider>();
         fallDamageTracker = GetComponent<FallDamage>();
+
+        // Nose dive: its own action so the input file / generated SGInput class need no change.
+        // RT is otherwise only used by dance moves, which only work while standing.
+        noseDiveAction = new InputAction("NoseDive", InputActionType.Button);
+        noseDiveAction.AddBinding("<Gamepad>/rightTrigger");
+        noseDiveAction.AddBinding("<Keyboard>/e");
 
         player1Controls = new SGInput();
 
@@ -379,10 +401,47 @@ public class GnomeMovement : MonoBehaviour
         }
     }
 
+    // Nose dive: hold RT / E while falling to fall faster, paid for with boost per second.
+    void HandleNoseDive()
+    {
+        var pm = Toolbox.instance.m_playerManager;
+        bool held = noseDiveAction != null && noseDiveAction.IsPressed();
+        bool falling = isFallingIdle && !m_floorCollider.isStanding && verticalVelocity <= 0f;
+        bool canPay = pm != null && pm.boost > 0f;
+
+        bool wasDiving = IsDiving;
+        IsDiving = held && falling && canPay;
+        if (IsDiving) pm.boost = Mathf.Max(0f, pm.boost - diveBoostPerSecond * Time.deltaTime);
+        else if (held && falling && !canPay && !wasDiving && noseDiveAction.WasPressedThisFrame()) pm?.FlashBoostWarning();
+        if (IsDiving != wasDiving) Debug.Log(IsDiving ? "Nose dive." : "Nose dive ended.");
+    }
+
+    // Tip the visual model (ModelWithBones, not the physics capsule) head-first while diving,
+    // rotating around the middle of his body.
+    void ApplyDivePose()
+    {
+        if (modelTransform == null) return;
+        if (!modelRestKnown)
+        {
+            modelRestLocalPos = modelTransform.localPosition;
+            modelRestLocalRot = modelTransform.localRotation;
+            modelRestKnown = true;
+        }
+        diveBlend = Mathf.MoveTowards(diveBlend, IsDiving ? 1f : 0f, diveTiltSpeed * Time.deltaTime);
+
+        Transform parent = modelTransform.parent;
+        Vector3 pivotWorld = bodyCollider != null ? transform.TransformPoint(bodyCollider.center) : transform.position;
+        Vector3 pivotLocal = parent != null ? parent.InverseTransformPoint(pivotWorld) : pivotWorld;
+        Quaternion tilt = Quaternion.Euler(diveTiltDegrees * diveBlend, 0f, 0f);
+        modelTransform.localPosition = pivotLocal + tilt * (modelRestLocalPos - pivotLocal);
+        modelTransform.localRotation = tilt * modelRestLocalRot;
+    }
+
     // Fall one frame, stopping on top of the first platform in the way.
     void FallStep()
     {
         float step = fallSpeed * gravity * Time.deltaTime; // both negative in the prefab, so positive
+        if (IsDiving) step *= diveSpeedMultiplier;
         if (step <= 0f) return;
         if (CastDown(step + groundSkin, out RaycastHit ground))
         {
@@ -695,6 +754,7 @@ public class GnomeMovement : MonoBehaviour
         HandleRotation();
         HandleJumpAndBoost();
         HandleGround();
+        HandleNoseDive();
         HandleDanceTiers();
         //Move transform down when in falling state (not while a jump or boost is carrying him up).
 
@@ -1002,14 +1062,21 @@ public class GnomeMovement : MonoBehaviour
         GUI.Label(new Rect(18, 14, 550, 105), text);
     }
 
+    void LateUpdate()
+    {
+        ApplyDivePose();
+    }
+
     void OnEnable()
     {
         player1Controls.Player.Enable();
+        noseDiveAction?.Enable();
 
     }
     void OnDisable()
     {
         player1Controls.Player.Disable();
+        noseDiveAction?.Disable();
     }
 }
     

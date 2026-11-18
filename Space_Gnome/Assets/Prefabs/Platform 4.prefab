@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 8346784061482993128}
   - component: {fileID: 8912961319777255964}
   - component: {fileID: -8231424722152689015}
-  - component: {fileID: 8453800500580292548}
   m_Layer: 0
   m_Name: Platform 4
   m_TagString: Floor
@@ -129,21 +128,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8453800500580292548
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4317766815163216578}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab6de60ff8c5b3041b853c2d027801c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  platformPrefab: {fileID: 0}
-  platformObjectsParent: {fileID: 0}
-  spawnablePlatforms: []
-  platformSpawnDistance: 0
-  platformSpawnOffset: {x: 0, y: 0, z: 0}

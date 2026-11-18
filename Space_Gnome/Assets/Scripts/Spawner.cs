@@ -144,7 +144,10 @@ public class Spawner : MonoBehaviour
             Instantiate(objectInstantiator, spawnedSpawnerParentTransform, true);
             isColliding = true;
         }
-        else { collision.gameObject.SetActive(false); }
+        // 2026: never switch off things the gnome can stand on (level / spawned platforms, land-able
+        // junk). The spawner boxes track the gnome's height, so they used to hit the platform he
+        // was about to land on and make it vanish.
+        else if (!collision.gameObject.CompareTag("Floor")) { collision.gameObject.SetActive(false); }
     }
     public void OnTriggerEnter(Collider collision)
     {

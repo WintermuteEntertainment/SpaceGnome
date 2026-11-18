@@ -147,3 +147,19 @@ MonoBehaviour:
   spawnablePlatforms: []
   platformSpawnDistance: 0
   platformSpawnOffset: {x: 0, y: 0, z: 0}
+  boostCost: 500
+  allowWhileStanding: 0
+  maxPlatforms: 10
+  lifetimeSeconds: 30
+  despawnSeconds: 0.5
+  popInSeconds: 0.5
+  spawnEffectPrefab: {fileID: 0}
+  burstColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+  burstParticles: 90
+  streamStaticPlatforms: 1
+  layerSpacing: 140
+  lookAhead: 450
+  removeAbove: 250
+  sideOffset: {x: 2, y: 35}
+  staticScale: 0.6
+  secondPlatformChance: 0.35

@@ -16,7 +16,7 @@ MonoBehaviour:
   - 'You''re Space Gnome, falling through space toward Earth. Grab coins, dodge asteroids and score big before time runs out. (A / Enter: next. B / Backspace: skip.)'
   - 'Steer with the left stick (WASD). Turn with the right stick (mouse). In the air, press X (P) to drop a platform below you. It costs boost.'
   - 'Fall too far before landing and you lose HP, so use platforms to break long falls.'
-  - 'On a platform, A (Space) jumps. Hold A in the air, even while falling, to fly up on boost. Hold B (Shift) while moving to run.'
+  - 'On a platform, A (Space) jumps. In the air, hold A to fly up or RT (E) to nose-dive faster; both use boost. Hold B (Shift) while moving to run.'
   - 'Tap Y (Ctrl) to dance. Hold Y to get ready to breakdance, then hold LT, RT, LB or RB (arrow keys) for four moves.'
   - 'Chain breakdance moves to build a coin bonus: 3 moves = +3, up to +5. Your next coin gets it, then it resets. Landing resets it too. Dancing also refills boost.'
   - 'Hold Y and B together for a second stance and the advanced moves: tap LB, LT or RB, or press RT (arrow keys).'

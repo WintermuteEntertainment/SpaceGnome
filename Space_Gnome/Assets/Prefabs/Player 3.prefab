@@ -2659,6 +2659,22 @@ MonoBehaviour:
   - {fileID: 4317766815163216578, guid: b8b8184e7d466ac488c0bb46be07b591, type: 3}
   platformSpawnDistance: 40
   platformSpawnOffset: {x: 0, y: -9, z: 0}
+  boostCost: 1500
+  allowWhileStanding: 0
+  maxPlatforms: 5
+  lifetimeSeconds: 30
+  despawnSeconds: 0.3
+  popInSeconds: 0.35
+  spawnEffectPrefab: {fileID: 0}
+  burstColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+  burstParticles: 90
+  streamStaticPlatforms: 1
+  layerSpacing: 140
+  lookAhead: 450
+  removeAbove: 250
+  sideOffset: {x: 2, y: 35}
+  staticScale: 0.6
+  secondPlatformChance: 0.35
 --- !u!114 &1449485953526765327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2715,6 +2731,11 @@ MonoBehaviour:
   boostWhileFalling: 1
   groundSkin: 0.05
   floorTag: Floor
+  groundLossGraceSeconds: 0.2
+  diveSpeedMultiplier: 2.5
+  diveBoostPerSecond: 1500
+  diveTiltDegrees: 110
+  diveTiltSpeed: 5
   turnSpeedDegrees: 240
   lookDeadZone: 0.25
   comboCount: 0
@@ -2765,6 +2786,10 @@ MonoBehaviour:
   timeCoinTextObject: {fileID: 3722615921165615334}
   plusHoldSeconds: 1
   plusFadeSeconds: 0.5
+  pointsPerCoin: 1000
+  hpPerCoin: 1
+  timeCoinBaseSeconds: 3
+  timeCoinDecay: 0.85
 --- !u!114 &6116061466706884029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3521,6 +3546,7 @@ MonoBehaviour:
   pointsCoinsCollectedText: {fileID: 0}
   hPCoinsCollectedText: {fileID: 0}
   timeCoinsCollectedText: {fileID: 0}
+  secondsPerExtraMultiplier: 60
 --- !u!114 &8504456278880588822
 MonoBehaviour:
   m_ObjectHideFlags: 0
