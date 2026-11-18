@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 4163415532406020154}
   - component: {fileID: 8346784061482993128}
   - component: {fileID: 8912961319777255964}
-  - component: {fileID: -8231424722152689015}
+  - component: {fileID: 8734148724867965583}
   m_Layer: 0
-  m_Name: Platform 2
+  m_Name: Platform
   m_TagString: Floor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,13 +28,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4317766815163216578}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -23670, z: 0}
-  m_LocalScale: {x: 50, y: 3, z: 50}
+  m_LocalRotation: {x: -0, y: 0.28030083, z: -0, w: 0.9599122}
+  m_LocalPosition: {x: -0.065136306, y: -22320, z: 0.027916662}
+  m_LocalScale: {x: 50.750397, y: 1.7568, z: 60.374977}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 32.556, z: 0}
 --- !u!23 &4163415532406020154
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -55,7 +55,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ff743e1ac63332046a8ec90916a49e26, type: 2}
+  - {fileID: 2100000, guid: 549ee1bb4a28ac44f91e25ab0ddc4f51, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -84,7 +84,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4317766815163216578}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 49602870209940819, guid: a81c2b6648a3e9c4bbbf496925671e89, type: 3}
 --- !u!64 &8912961319777255964
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -106,25 +106,33 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &-8231424722152689015
-BoxCollider:
+  m_Mesh: {fileID: 49602870209940819, guid: a81c2b6648a3e9c4bbbf496925671e89, type: 3}
+--- !u!114 &8734148724867965583
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4317766815163216578}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab6de60ff8c5b3041b853c2d027801c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 3619017697610197251, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+  platformPrefab: {fileID: 4317766815163216578}
+  platformObjectsParent: {fileID: 0}
+  danceFloorPrefabs: []
+  spawnablePlatforms: []
+  platformSpawnDistance: 0
+  platformSpawnOffset: {x: 0, y: 0, z: 0}
+  spawnBelowGnome: 30
+  boostCost: 500
+  allowWhileStanding: 0
+  maxPlatforms: 10
+  lifetimeSeconds: 30
+  despawnSeconds: 0.5
+  popInSeconds: 0.5
+  spawnEffectPrefab: {fileID: 0}
+  burstColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+  burstParticles: 90

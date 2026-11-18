@@ -47,6 +47,7 @@ public class PlayerManager : MonoBehaviour
         isGameOver = true;
 
         score = ComputeScore();
+        Debug.Log("Final score: " + ScoreBreakdown());
         if (Toolbox.instance.m_highScores != null) Toolbox.instance.m_highScores.newScore = score;
 
         float best = Mathf.Max(0f, PlayerPrefs.GetFloat("HighScore", 0f));
@@ -73,15 +74,16 @@ public class PlayerManager : MonoBehaviour
         hPCoinsCollectedText.text = Toolbox.instance.m_coins.totalHealthCoinsCollected.ToString();
         timeCoinsCollectedText.text = Toolbox.instance.m_coins.totalTimeCoinsCollected.ToString();
 
-        if (Toolbox.instance.m_uIManager.finalScoreText.text != null) 
+        if (Toolbox.instance.m_uIManager.finalScoreText.text != null)
         {
-            Toolbox.instance.m_uIManager.finalScoreText.text = score.ToString("f0");
+            Toolbox.instance.m_uIManager.finalScoreText.text = score.ToString("N0");
         }
+        ShowCoinsRecovered();
 
 
         Toolbox.instance.m_uIManager.gameOverPanel.SetActive(true);
-        Toolbox.instance.m_uIManager.highScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("HighScore")).ToString("f0");
-        Toolbox.instance.m_uIManager.previousHighScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("PreviousHighScore")).ToString("f0");
+        Toolbox.instance.m_uIManager.highScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("HighScore")).ToString("N0");
+        Toolbox.instance.m_uIManager.previousHighScoreText.text = Mathf.Max(0f, PlayerPrefs.GetFloat("PreviousHighScore")).ToString("N0");
         Debug.Log("Game over, man!");
         Debug.Log("Score was " + score + " at Game Over.");
        
@@ -100,6 +102,40 @@ public class PlayerManager : MonoBehaviour
         if (boost<= 0) { boost= 0; }
 
         if (!isGameOver) score = ComputeScore(); // frozen once the round is over
+    }
+
+    // "Coins recovered: 12 / 40 (30%)" under the final score (2026-11-18). A copy of the final
+    // score text (same font, style, parent), moved down by its own height; built once, at runtime,
+    // so UI 2.prefab is not edited. Nudge it with 'coinsRecoveredOffset' if it overlaps.
+    [Tooltip("Position of the coins-recovered line relative to the final score text.")]
+    [SerializeField] Vector2 coinsRecoveredOffset = new Vector2(0f, -70f);
+    [SerializeField] float coinsRecoveredFontScale = 0.7f;
+    TMP_Text coinsRecoveredText;
+
+    void ShowCoinsRecovered()
+    {
+        var coins = Toolbox.instance.m_coins;
+        var final = Toolbox.instance.m_uIManager.finalScoreText;
+        if (coins == null) return;
+        int got = coins.CoinsCollected, total = Mathf.Max(coins.coinsSpawned, got); // never over 100%
+        float pct = total > 0 ? 100f * got / total : 0f;
+        string line = "Coins recovered: " + got + " / " + total + " (" + pct.ToString("0") + "%)";
+        Debug.Log(line + " [points " + coins.totalPointsCoinsCollected + ", health " + coins.totalHealthCoinsCollected +
+                  ", time " + coins.totalTimeCoinsCollected + "; spawned " + coins.coinsSpawned + "]");
+        if (final == null) return;
+
+        if (coinsRecoveredText == null)
+        {
+            var go = Instantiate(final.gameObject, final.transform.parent);
+            go.name = "CoinsRecoveredText (runtime)";
+            coinsRecoveredText = go.GetComponent<TMP_Text>();
+            var rt = (RectTransform)go.transform;
+            rt.anchoredPosition = ((RectTransform)final.transform).anchoredPosition + coinsRecoveredOffset;
+            rt.sizeDelta = new Vector2(Mathf.Max(rt.sizeDelta.x, 700f), rt.sizeDelta.y);
+            coinsRecoveredText.fontSize = final.fontSize * coinsRecoveredFontScale;
+            coinsRecoveredText.enableWordWrapping = false;
+        }
+        coinsRecoveredText.text = line;
     }
 
     // Brief red flash on the boost number, e.g. when a platform is refused for lack of boost.
@@ -133,6 +169,16 @@ public class PlayerManager : MonoBehaviour
     // 2023 formula was (points + hP/2) * (timeRoundStarted - Time.time), which went negative as
     // the round went on. Health counts as at least 1, so a round that ends with 0 HP still scores
     // its points (with HP 0 the product would otherwise always be 0).
+    // Every input to the score, for the log at game over (checking "the scores feel off").
+    public string ScoreBreakdown()
+    {
+        float seconds = Mathf.Max(0f, Time.time - Toolbox.instance.m_uIManager.timeRoundStarted);
+        float roundMultiplier = 1f + seconds / Mathf.Max(1f, secondsPerExtraMultiplier);
+        return "points " + points.ToString("N0") + " x HP " + Mathf.Max(hP, 1) + (hP < 1 ? " (HP " + hP + " counted as 1)" : "") +
+               " x time bonus " + roundMultiplier.ToString("0.00") + " (" + seconds.ToString("0.0") + " s, round started at t " +
+               Toolbox.instance.m_uIManager.timeRoundStarted.ToString("0.0") + ") = " + ComputeScore().ToString("N0");
+    }
+
     public float ComputeScore()
     {
         float seconds = Mathf.Max(0f, Time.time - Toolbox.instance.m_uIManager.timeRoundStarted);

@@ -98,9 +98,24 @@ public class Spawner : MonoBehaviour
     }
     void SpawnObject()
     {
+        // 2026: skip empty entries (a deleted prefab leaves a hole in the list, e.g. entry 18 after
+        // "Rocks2 (landable)" was removed); Instantiate(null) throws.
+        GameObject pick = null;
+        for (int tries = 0; tries < 10 && pick == null; tries++) pick = objects[Random.Range(0, objects.Length)];
+        if (pick == null) { isColliding = false; return; }
         objectCount += 1;
-       Instantiate(spawnedObject = objects[Random.Range(0, objects.Length)], firePoint.position, firePoint.rotation, spawnedObjectParentTransform); 
-        
+        // Keep the NEW object, not the prefab (2023 stored the prefab here, so the later
+        // spawnedObject.SetActive(false) switched off the prefab asset itself).
+        spawnedObject = Instantiate(pick, firePoint.position, firePoint.rotation, spawnedObjectParentTransform);
+        // 2026-11-18: tumble-and-settle (drift, spin, wobble; still while the gnome stands on it).
+        // Junk only (tag Floor): the same lists also hold Coin 1-3 and the hazard Asteroid, which
+        // keep their own physics.
+        if (spawnedObject.CompareTag("Floor") && spawnedObject.GetComponent<JunkMotion>() == null)
+            spawnedObject.AddComponent<JunkMotion>();
+        // Count coins for "coins recovered %" at game over (2026-11-18).
+        if ((pick.CompareTag("Coin1") || pick.CompareTag("Coin2") || pick.CompareTag("Coin3")) && Toolbox.instance.m_coins != null)
+            Toolbox.instance.m_coins.coinsSpawned++;
+
 
         if (spawnedObject != null) { if (spawnedObject.activeInHierarchy) { isSpawned = true; Debug.Log("Instantaited Object: " + spawnedObject.name); } }
         else { isSpawned = false; }

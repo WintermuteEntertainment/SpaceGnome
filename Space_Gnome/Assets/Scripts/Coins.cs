@@ -36,6 +36,9 @@ public class Coins : MonoBehaviour
     public int totalTimeCoinsCollected;
     public int totalHealthCoinsCollected;
     public int totalPointsCoinsCollected;
+    [Tooltip("Coins that existed this round: active Coin1-3 objects in the scene at start + every coin the Spawner creates (2026-11-18).")]
+    public int coinsSpawned;
+    public int CoinsCollected => totalPointsCoinsCollected + totalHealthCoinsCollected + totalTimeCoinsCollected;
 
     public GnomeMovement m_gnomeMovement;
 
@@ -66,6 +69,11 @@ public class Coins : MonoBehaviour
     {
         points = 0;
         danceBonus = 0;
+
+        // Coins already placed in the scene count as part of the level (GYM_03 has one of each).
+        // FindGameObjectsWithTag only returns active objects, so inactive templates are skipped.
+        coinsSpawned = 0;
+        foreach (var tag in new[] { "Coin1", "Coin2", "Coin3" }) coinsSpawned += GameObject.FindGameObjectsWithTag(tag).Length;
 
         // Deactivate all the plus GameObjects at the start
         plus1.SetActive(false);

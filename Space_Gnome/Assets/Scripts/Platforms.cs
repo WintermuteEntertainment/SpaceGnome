@@ -16,6 +16,11 @@ public class Platforms : MonoBehaviour
 
     [SerializeField] Transform platformObjectsParent;
 
+    [Tooltip("Player-spawned dance floors (rectangular, BoxCollider, tag Floor). One is picked at random per press.")]
+    public GameObject[] danceFloorPrefabs;
+
+    [Tooltip("LEGACY (2026-11-18): the old shared list. These are now the level asteroid platforms and live on " +
+             "LevelObjects.levelPrefabs; 'Space Gnome > Set Up Dance Floors + Level Rocks' copies them across. Not used here.")]
     public GameObject[] spawnablePlatforms;
 
     GameObject clone;
@@ -41,6 +46,7 @@ public class Platforms : MonoBehaviour
     [Tooltip("Boost spent per platform. Start boost is 10000 and each basic dance move gives 1000, " +
              "so 1500 = about 6 platforms from a full start, or one per 1.5 dance moves after that.")]
     [SerializeField] float boostCost = 1500f;
+    public float BoostCost => boostCost; // for the HUD platform count
     [Tooltip("Allow spawning while standing on a platform (normally only in the air, to break a fall).")]
     [SerializeField] bool allowWhileStanding = false;
 
@@ -63,27 +69,9 @@ public class Platforms : MonoBehaviour
     readonly List<GameObject> spawned = new List<GameObject>();
     readonly Dictionary<GameObject, float> spawnTime = new Dictionary<GameObject, float>();
     static Material burstMaterial;
+    bool warnedNoFloors;
 
-    [Header("Static platforms (2026)")]
-    [Tooltip("Stream world-fixed platforms below the gnome as he falls, so running out of boost is survivable.")]
-    [SerializeField] bool streamStaticPlatforms = true;
-    [Tooltip("Vertical distance between layers (randomised +/-15%). Fall damage starts at 150, so ~140 keeps " +
-             "hopping down from one static platform to the next damage-free.")]
-    [SerializeField] float layerSpacing = 140f;
-    [Tooltip("Layers are created this far below the gnome (about 11 s of falling at normal speed).")]
-    [SerializeField] float lookAhead = 450f;
-    [Tooltip("Static platforms this far above the gnome are removed.")]
-    [SerializeField] float removeAbove = 250f;
-    [Tooltip("Extra horizontal distance beyond 'just clear of his path' (min, max). Never placed directly under him.")]
-    [SerializeField] Vector2 sideOffset = new Vector2(2f, 35f);
-    [Tooltip("Size relative to the platform prefab (player-spawned ones are 1).")]
-    [SerializeField] float staticScale = 0.6f;
-    [Tooltip("Chance a layer gets a second platform.")]
-    [SerializeField, Range(0f, 1f)] float secondPlatformChance = 0.35f;
-
-    readonly List<GameObject> staticPlatforms = new List<GameObject>();
-    float nextLayerY;
-    bool streamStarted;
+    // Level asteroid platforms moved to LevelObjects.cs (2026-11-18, separation of concerns).
 
     private void Awake()
     {
@@ -95,8 +83,14 @@ public class Platforms : MonoBehaviour
 
     public void Fire()
     {
-        if (spawnablePlatforms == null || spawnablePlatforms.Length == 0) return;
-        var prefab = spawnablePlatforms[Random.Range(0, spawnablePlatforms.Length)];
+        if (danceFloorPrefabs == null || danceFloorPrefabs.Length == 0)
+        {
+            if (!warnedNoFloors) Debug.LogWarning("No dance floor prefabs assigned (Platforms.danceFloorPrefabs on GNOME 1). " +
+                                                  "Run Space Gnome > Set Up Dance Floors + Level Rocks.");
+            warnedNoFloors = true;
+            return;
+        }
+        var prefab = danceFloorPrefabs[Random.Range(0, danceFloorPrefabs.Length)];
         if (prefab == null) return;
 
         var gm = Toolbox.instance.m_gnomeMovement;
@@ -119,7 +113,8 @@ public class Platforms : MonoBehaviour
         clone = Instantiate(prefab, at, Quaternion.Euler(0f, Gnome.eulerAngles.y, 0f), platformObjectsParent);
         clone.SetActive(true);
         StripStrayPlatformsComponents(clone);
-        Debug.Log("Spawned platform at " + clone.transform.position + " for " + boostCost + " boost.");
+        var floor = clone.GetComponent<DanceFloor>();
+        Debug.Log("Spawned dance floor '" + (floor != null ? floor.kind : prefab.name) + "' at " + clone.transform.position + " for " + boostCost + " boost.");
 
         PopIn(clone);
         Burst(clone);
@@ -132,76 +127,18 @@ public class Platforms : MonoBehaviour
     private void Update()
     {
         if (spawned.Count > 0) Cleanup();
-        if (streamStaticPlatforms) StreamStaticPlatforms();
-    }
-
-    // Keep layers of world-fixed platforms in a band below the gnome, wherever he has drifted.
-    void StreamStaticPlatforms()
-    {
-        if (spawnablePlatforms == null || spawnablePlatforms.Length == 0) return;
-        float py = Gnome.position.y;
-        if (!streamStarted) { nextLayerY = py - layerSpacing; streamStarted = true; }
-
-        int guard = 0; // never more than a handful per frame, even after a long nose dive
-        while (nextLayerY > py - lookAhead && guard++ < 8)
-        {
-            SpawnStaticLayer(nextLayerY);
-            nextLayerY -= layerSpacing * Random.Range(0.85f, 1.15f);
-        }
-        if (nextLayerY > py) nextLayerY = py - layerSpacing; // he outran the stream (e.g. boosted up)
-
-        var ground = Toolbox.instance.m_gnomeMovement != null ? Toolbox.instance.m_gnomeMovement.CurrentGround : null;
-        for (int i = staticPlatforms.Count - 1; i >= 0; i--)
-        {
-            var p = staticPlatforms[i];
-            if (p == null) { staticPlatforms.RemoveAt(i); continue; }
-            if (p.transform.position.y - py <= removeAbove) continue;
-            if (ground != null && ground.transform.IsChildOf(p.transform)) continue;
-            staticPlatforms.RemoveAt(i);
-            Despawn(p);
-        }
     }
 
     // Every Platform prefab carries a stray, unconfigured copy of this script (Platform 1 has two).
     // Each copy creates and enables its own SGInput (all gamepad bindings) in Awake/OnEnable, so
     // streaming dozens of platforms meant dozens of extra input copies; the gamepad stopped
     // responding when level platforms arrived. Remove them from every new platform.
-    static void StripStrayPlatformsComponents(GameObject p)
+    public static void StripStrayPlatformsComponents(GameObject p)
     {
         foreach (var extra in p.GetComponentsInChildren<Platforms>(true))
         {
             extra.enabled = false;   // OnDisable now: disables its input copy immediately
             Destroy(extra);
-        }
-    }
-
-    void SpawnStaticLayer(float y)
-    {
-        int count = Random.value < secondPlatformChance ? 2 : 1;
-        float firstAngle = Random.Range(0f, 360f);
-        for (int n = 0; n < count; n++)
-        {
-            var prefab = spawnablePlatforms[Random.Range(0, spawnablePlatforms.Length)];
-            if (prefab == null) continue;
-            var p = Instantiate(prefab, platformObjectsParent);
-            p.name = prefab.name + " (static)";
-            p.SetActive(true);
-            p.transform.localScale = prefab.transform.localScale * staticScale;
-            p.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-
-            // Just clear of his straight-down path: half the platform's width plus his body and a margin.
-            float halfWidth = 5f;
-            var rend = p.GetComponentInChildren<Renderer>();
-            if (rend != null) halfWidth = Mathf.Max(rend.bounds.extents.x, rend.bounds.extents.z);
-            float clear = halfWidth + 2f;
-
-            float angle = (firstAngle + n * Random.Range(120f, 240f)) * Mathf.Deg2Rad; // second one on another side
-            float dist = clear + Random.Range(sideOffset.x, sideOffset.y);
-            Vector3 c = Gnome.position;
-            p.transform.position = new Vector3(c.x + Mathf.Cos(angle) * dist, y, c.z + Mathf.Sin(angle) * dist);
-            StripStrayPlatformsComponents(p);
-            p.AddComponent<LevelPlatform>(); // glow + watchdog
-            staticPlatforms.Add(p);
         }
     }
 
@@ -230,8 +167,6 @@ public class Platforms : MonoBehaviour
 
     void Despawn(GameObject p)
     {
-        var level = p.GetComponent<LevelPlatform>();
-        if (level != null) level.removalExpected = true;
         foreach (var c in p.GetComponentsInChildren<Collider>()) c.enabled = false; // nothing lands on a vanishing platform
         p.transform.DOKill();
         p.transform.DOScale(Vector3.zero, despawnSeconds).SetEase(Ease.InBack).OnComplete(() => { if (p != null) Destroy(p); });

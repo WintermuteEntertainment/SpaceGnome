@@ -93,6 +93,7 @@ public class UI_Manager : MonoBehaviour
         replayTutorialAction.performed += ctx => { if (State == MenuState.Paused) PlayTutorial(MenuState.Paused); };
 
         if (dialogueUI == null) dialogueUI = FindObjectOfType<DialogueUI>(true);
+        if (GetComponent<HudStats>() == null) gameObject.AddComponent<HudStats>(); // combo / fall readout (2026-11-18)
 
         if (startMenuFirstButton == null) startMenuFirstButton = FindButton(startPanel, "StartButton");
         if (gameOverFirstButton == null) gameOverFirstButton = FindButton(gameOverPanel, "RestartButton");
@@ -131,7 +132,11 @@ public class UI_Manager : MonoBehaviour
 
     public void Update()
     {
-        scoreText.text = Toolbox.instance.m_playerManager.score.ToString();
+        // Whole number with separators. The 2023 line used ToString(), which prints large scores as
+        // decimals or in E notation (e.g. 1.73742E+06).
+        scoreText.text = Toolbox.instance.m_playerManager.score.ToString("N0");
+
+        if (resetArmedUntil > 0f && Time.unscaledTime > resetArmedUntil) DisarmReset();
 
         // PlayerManager.GameOver() turns the game over panel on directly.
         if (State != MenuState.GameOver && gameOverPanel != null && gameOverPanel.activeInHierarchy)
@@ -254,10 +259,52 @@ public class UI_Manager : MonoBehaviour
         if (State == MenuState.StartMenu || State == MenuState.Paused) StartPlaying();
     }
 
+    // Two presses: the first arms it ("Press again to reset" for 3 s), the second resets.
+    // 2023 deleted the keys only: no Save, no on-screen update, in-memory copies untouched, so it
+    // looked like it did nothing.
+    float resetArmedUntil = -1f;
+    float resetArmedAt;
+    TMP_Text resetLabel;
+    string resetLabelOriginal;
+
     public void ResetHighScore()
     {
+        if (resetLabel == null)
+        {
+            var b = FindButton(gameOverPanel, "ResetHighScoresButton");
+            if (b != null && b.name == "ResetHighScoresButton") resetLabel = b.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (resetArmedUntil < 0f || Time.unscaledTime > resetArmedUntil)
+        {
+            resetArmedAt = Time.unscaledTime;
+            resetArmedUntil = Time.unscaledTime + 3f;
+            if (resetLabel != null)
+            {
+                if (resetLabelOriginal == null) resetLabelOriginal = resetLabel.text;
+                resetLabel.text = "Press again to reset";
+            }
+            Debug.Log("Reset high scores: press again within 3 s to confirm.");
+            return;
+        }
+        // The same click can arrive twice in one frame (mouse handler + EventSystem): not a confirm.
+        if (Time.unscaledTime - resetArmedAt < 0.25f) return;
+
         PlayerPrefs.DeleteKey("HighScore");
         PlayerPrefs.DeleteKey("PreviousHighScore");
+        PlayerPrefs.Save();
+        var hs = Toolbox.instance.m_highScores;
+        if (hs != null) { hs.currentHighScore = 0f; hs.previousHighScore = 0f; }
+        if (highScoreText != null) highScoreText.text = "0";
+        if (previousHighScoreText != null) previousHighScoreText.text = "0";
+        DisarmReset();
+        Debug.Log("High scores reset (saved).");
+    }
+
+    void DisarmReset()
+    {
+        resetArmedUntil = -1f;
+        if (resetLabel != null && resetLabelOriginal != null) resetLabel.text = resetLabelOriginal;
     }
 
     public void RestartButton()

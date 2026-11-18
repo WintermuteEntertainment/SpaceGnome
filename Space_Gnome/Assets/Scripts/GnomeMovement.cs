@@ -208,6 +208,7 @@ public class GnomeMovement : MonoBehaviour
 
     void HandleMovement() //Move player transform based on Move Vector.
     {
+        if (LandLocked) return; // still face-down from a hard landing
         if (isWalking || isJumping || isSprinting || isFallingIdle)
         {
             Vector3 m = playerSpeed * Time.deltaTime * new Vector3(move.x, move.z, move.y).normalized;
@@ -366,6 +367,37 @@ public class GnomeMovement : MonoBehaviour
         comboCount = 0;
         if (Toolbox.instance.m_coins != null) Toolbox.instance.m_coins.ResetCombo();
         if (fallDamageTracker != null) fallDamageTracker.OnLanded(transform.position.y);
+        PlayLandingAnimation();
+    }
+
+    // Landing animations (2026-11-18, Tim's picks from Animation/Animations/Dances):
+    //   Jumping Down = normal landing; Fall Flat = a landing that cost HP (fall over 150), which
+    //   also keeps him down for hardLandLockSeconds (no walking or jumping; dancing still works,
+    //   since its Any State transitions interrupt). Animator triggers "Land" / "LandHard" and the
+    //   states are added by Space Gnome > Add Landing Animations.
+    [Header("Landing animation (2026)")]
+    [Tooltip("Seconds he can't walk or jump after a landing that cost HP (Fall Flat).")]
+    [SerializeField] float hardLandLockSeconds = 1.2f;
+    float landLockUntil;
+    public bool LandLocked => Time.time < landLockUntil;
+    bool? hasLandParams;
+
+    void PlayLandingAnimation()
+    {
+        if (player1Animator == null) return;
+        if (hasLandParams == null)
+        {
+            hasLandParams = false;
+            foreach (var p in player1Animator.parameters) if (p.name == "LandHard") hasLandParams = true;
+            if (hasLandParams == false) Debug.LogWarning("Gnome Animator has no Land/LandHard triggers yet: run Space Gnome > Add Landing Animations.");
+        }
+        if (hasLandParams == false) return;
+
+        bool hard = fallDamageTracker != null && fallDamageTracker.LastFall > fallDamageTracker.SafeFall;
+        player1Animator.ResetTrigger(hard ? "Land" : "LandHard");
+        player1Animator.SetTrigger(hard ? "LandHard" : "Land");
+        if (hard) landLockUntil = Time.time + hardLandLockSeconds;
+        Debug.Log((hard ? "Hard landing (Fall Flat), down for " + hardLandLockSeconds + " s." : "Soft landing (Jumping Down)."));
     }
 
     void LeaveGround(bool jumped)
@@ -1028,6 +1060,7 @@ public class GnomeMovement : MonoBehaviour
         // up by jumpHeight.y * jumpSpeed in one frame (and ran twice per press).
         // verticalVelocity > 0 means this press already started a jump this frame.
         if (!m_floorCollider.isStanding || verticalVelocity > 0f) return;
+        if (LandLocked) return; // still face-down from a hard landing
 
         ResetStates();
         verticalVelocity = baseJumpSpeed;

@@ -2420,6 +2420,7 @@ GameObject:
   - component: {fileID: 6716117092769122577}
   - component: {fileID: 6116061466706884029}
   - component: {fileID: 8665924936839747185}
+  - component: {fileID: 7276223308210642856}
   m_Layer: 0
   m_Name: GNOME 1
   m_TagString: Player
@@ -2651,6 +2652,8 @@ MonoBehaviour:
   player: {fileID: 5510678848626515224}
   platformPrefab: {fileID: 4317766815163216578, guid: cb7428bb05581654b9ada8107bda320f, type: 3}
   platformObjectsParent: {fileID: 0}
+  danceFloorPrefabs:
+  - {fileID: 8562985110986447017, guid: 4375bd3efde4db54887d178268c41579, type: 3}
   spawnablePlatforms:
   - {fileID: 4317766815163216578, guid: cb7428bb05581654b9ada8107bda320f, type: 3}
   - {fileID: 4317766815163216578, guid: 4f9bf292c1f9f644f87b315853031b7a, type: 3}
@@ -2659,6 +2662,7 @@ MonoBehaviour:
   - {fileID: 4317766815163216578, guid: b8b8184e7d466ac488c0bb46be07b591, type: 3}
   platformSpawnDistance: 40
   platformSpawnOffset: {x: 0, y: -9, z: 0}
+  spawnBelowGnome: 30
   boostCost: 1500
   allowWhileStanding: 0
   maxPlatforms: 5
@@ -2668,13 +2672,6 @@ MonoBehaviour:
   spawnEffectPrefab: {fileID: 0}
   burstColor: {r: 0.55, g: 0.9, b: 1, a: 1}
   burstParticles: 90
-  streamStaticPlatforms: 1
-  layerSpacing: 140
-  lookAhead: 450
-  removeAbove: 250
-  sideOffset: {x: 2, y: 35}
-  staticScale: 0.6
-  secondPlatformChance: 0.35
 --- !u!114 &1449485953526765327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2831,6 +2828,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21668f8ef5967914dbb0e78503d30c42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7276223308210642856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2830961111325031066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531bc8af1572cb64d985c290f582dd79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelPrefabs:
+  - {fileID: 4317766815163216578, guid: cb7428bb05581654b9ada8107bda320f, type: 3}
+  - {fileID: 4317766815163216578, guid: 4f9bf292c1f9f644f87b315853031b7a, type: 3}
+  - {fileID: 4317766815163216578, guid: 0100bdec2db3c1841aabba567af2c45f, type: 3}
+  - {fileID: 4317766815163216578, guid: fa0b8285c011dfe4aabf39c76e79387e, type: 3}
+  - {fileID: 4317766815163216578, guid: b8b8184e7d466ac488c0bb46be07b591, type: 3}
+  layerSpacing: 140
+  lookAhead: 450
+  removeAbove: 250
+  sideOffset: {x: 2, y: 35}
+  scale: 1
+  secondChance: 0.35
+  randomYaw: 1
+  despawnSeconds: 0.3
 --- !u!1 &3044493384879509610
 GameObject:
   m_ObjectHideFlags: 0

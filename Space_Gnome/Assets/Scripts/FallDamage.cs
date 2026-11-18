@@ -34,6 +34,12 @@ public class FallDamage : MonoBehaviour
     // platform still charged damage.
     bool airborne = true;
 
+    // For the HUD (2026-11-18): distance fallen so far since he last stood, and where damage starts.
+    public bool Airborne => airborne;
+    public float CurrentFall => airborne ? Mathf.Max(0f, height - transform.position.y) : 0f;
+    public float SafeFall => fallDamageThreshHoldMinimum;
+    public float LastFall => fallDistance;
+
     private void Start()
     {
         height = transform.position.y;
