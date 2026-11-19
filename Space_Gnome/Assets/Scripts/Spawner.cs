@@ -57,6 +57,11 @@ public class Spawner : MonoBehaviour
     [Tooltip("2023 random spin of the latest asteroid every physics step (never actually ran in 2023). Off.")]
     [SerializeField] bool spinLatestAsteroid = false;
 
+    [Tooltip("Most asteroids alive at once, across all spawners (2026-11-19). The oldest is removed when a new " +
+             "one would go over. maxAsteroids on SpawnerParent 2 is 1,000,000 and only counts the total.")]
+    [SerializeField] int maxLiveAsteroids = 25;
+    static readonly Queue<GameObject> liveAsteroids = new Queue<GameObject>();
+
     // Count of live spawners, for the spawn log (2026-11-19: the collision path clones a spawner
     // without removing the old one, so check whether they pile up).
     static int liveSpawners;
@@ -160,6 +165,13 @@ public class Spawner : MonoBehaviour
             clone.transform.Translate(0, asteroidSpawnDistance, 0);
             if (clone.GetComponent<DespawnAbove>() == null) clone.AddComponent<DespawnAbove>();
             clonedAsteroid = clone;
+
+            // Cap how many exist at once (they now fall and can end up far below, out of DespawnAbove's reach).
+            // Drop entries already removed (DespawnAbove, a restart) so they don't count, then trim the oldest.
+            int n = liveAsteroids.Count;
+            for (int k = 0; k < n; k++) { var a = liveAsteroids.Dequeue(); if (a != null) liveAsteroids.Enqueue(a); }
+            liveAsteroids.Enqueue(clone);
+            while (liveAsteroids.Count > Mathf.Max(1, maxLiveAsteroids)) Destroy(liveAsteroids.Dequeue());
         }
         else if (asteroidCount > maxAsteroids && (clonedAsteroid != null)) { Destroy(clonedAsteroid); }
         else if (clonedAsteroid == null)

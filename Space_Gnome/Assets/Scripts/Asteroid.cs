@@ -17,6 +17,14 @@ public class Asteroid : MonoBehaviour
     // update per asteroid per frame. Its movement is entirely scripted, so the Rigidbody is now
     // kinematic with gravity off. It still hits the gnome (his Rigidbody is dynamic), so the damage
     // in Asteroids.cs is unchanged.
+    [Header("Falling (2026-11-19)")]
+    [Tooltip("Downward acceleration (units/s per second). 9.81 = Unity's default gravity, what they had as physics objects.")]
+    [SerializeField] float gravity = 9.81f;
+    [Tooltip("Top falling speed (units/s). The gnome falls ~39/s, so above that they pull away below him. " +
+             "As physics objects they had no limit and kept speeding up forever.")]
+    [SerializeField] float maxFallSpeed = 55f;
+    float fallVelocity;
+
     void Awake()
     {
         var rb = GetComponent<Rigidbody>();
@@ -37,5 +45,9 @@ public class Asteroid : MonoBehaviour
         if (axis.sqrMagnitude > 0.0001f)
             transform.RotateAround(earth.transform.position, axis, rotationIncrements * 60f * Time.deltaTime);
         transform.Translate(asteroidFallSpeed * fall * Time.deltaTime * Vector3.down);
+
+        // Gravity, scripted (Tim: they just floated once they stopped being physics objects).
+        fallVelocity = Mathf.Min(fallVelocity + gravity * Time.deltaTime, maxFallSpeed);
+        transform.position += Vector3.down * (fallVelocity * Time.deltaTime);
     }
 }
