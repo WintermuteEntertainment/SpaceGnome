@@ -94,6 +94,7 @@ public class UI_Manager : MonoBehaviour
 
         if (dialogueUI == null) dialogueUI = FindObjectOfType<DialogueUI>(true);
         if (GetComponent<HudStats>() == null) gameObject.AddComponent<HudStats>(); // combo / fall readout (2026-11-18)
+        if (GetComponent<SpeedLines>() == null) gameObject.AddComponent<SpeedLines>(); // falling speed lines (2026-11-18)
 
         if (startMenuFirstButton == null) startMenuFirstButton = FindButton(startPanel, "StartButton");
         if (gameOverFirstButton == null) gameOverFirstButton = FindButton(gameOverPanel, "RestartButton");

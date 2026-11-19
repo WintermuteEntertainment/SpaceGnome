@@ -54,10 +54,26 @@ public class Spawner : MonoBehaviour
     Vector3 randomPos;
 
 
+    [Tooltip("2023 random spin of the latest asteroid every physics step (never actually ran in 2023). Off.")]
+    [SerializeField] bool spinLatestAsteroid = false;
+
+    // Count of live spawners, for the spawn log (2026-11-19: the collision path clones a spawner
+    // without removing the old one, so check whether they pile up).
+    static int liveSpawners;
+    public static int LiveSpawners => liveSpawners;
+    void OnEnable() { liveSpawners++; }
+    void OnDisable() { liveSpawners--; }
+
     private void Awake()
     {
         isSpawned = false; //Currently unused.
         spawningAllowed = true;
+
+        // 2026-11-19: this box is moved every physics step (it chases the gnome) but had no Rigidbody,
+        // so physics treated it as fixed scenery being relocated, its most expensive case. A kinematic
+        // Rigidbody makes moving it cheap; it still detects the gnome (his Rigidbody is dynamic).
+        var rb = GetComponent<Rigidbody>();
+        if (rb == null) { rb = gameObject.AddComponent<Rigidbody>(); rb.isKinematic = true; rb.useGravity = false; }
     }
 
     [System.Obsolete]
@@ -90,7 +106,10 @@ public class Spawner : MonoBehaviour
     {
         Vector3 asteroidPosition = new Vector3(randomPos.x, randomPos.y, randomPos.z);
         asteroidFirePoint.transform.position = playerPrefab.transform.position + asteroidPosition;
-        if (clonedAsteroid != null) { clonedAsteroid.transform.RotateAround(rotationCenter.position, Random.Range(0, 361)); }
+        // 2023 spun the latest asteroid by a random angle every physics step here. It never ran
+        // (clonedAsteroid was never set until the 2026-11-19 fix) and would make it jitter, so it
+        // stays off now that clonedAsteroid is set.
+        if (spinLatestAsteroid && clonedAsteroid != null) { clonedAsteroid.transform.RotateAround(rotationCenter.position, Random.Range(0, 361)); }
 
         if (playerPrefab.transform.position.y < objectInstantiator.transform.position.y) { 
                 objectInstantiator.transform.Translate((objectInstantiator.transform.position.y - playerPrefab.transform.position.y - 1) * Time.deltaTime * Vector3.down);
@@ -112,6 +131,8 @@ public class Spawner : MonoBehaviour
         // keep their own physics.
         if (spawnedObject.CompareTag("Floor") && spawnedObject.GetComponent<JunkMotion>() == null)
             spawnedObject.AddComponent<JunkMotion>();
+        // Removed once the gnome has fallen well past it (2026-11-19; nothing was ever removed before).
+        if (spawnedObject.GetComponent<DespawnAbove>() == null) spawnedObject.AddComponent<DespawnAbove>();
         // Count coins for "coins recovered %" at game over (2026-11-18).
         if ((pick.CompareTag("Coin1") || pick.CompareTag("Coin2") || pick.CompareTag("Coin3")) && Toolbox.instance.m_coins != null)
             Toolbox.instance.m_coins.coinsSpawned++;
@@ -127,26 +148,20 @@ public class Spawner : MonoBehaviour
     [System.Obsolete]
     void SpawnAsteroid()
     {
-        int i;
+        // 2026-11-19: removed `for (i = 0; i <= maxAsteroids; i++) ;`, an empty loop that counted to
+        // 1,000,001 (maxAsteroids on SpawnerParent 2) on every asteroid spawn, and fixed the inverted
+        // `if (clonedAsteroid != null) clonedAsteroid = clone;`, which never stored anything.
         asteroidCount += 1;
-        for (i = 0; i <= maxAsteroids; i++) ;
-        if (asteroidCount <= maxAsteroids) 
+        if (asteroidCount <= maxAsteroids)
         {
             GameObject clone = Instantiate(asteroidPrefab, asteroidFirePoint.position, asteroidFirePoint.transform.rotation, rotationCenter);
-            Debug.Log ("Spawned asteroid " + i + ".");
+            Debug.Log ("Spawned asteroid " + asteroidCount + " (spawners alive: " + LiveSpawners + ").");
             clone.transform.RotateAround(rotationCenter.transform.position, Random.Range(0, 361));
             clone.transform.Translate(0, asteroidSpawnDistance, 0);
-            if (clonedAsteroid != null) { clonedAsteroid = clone; }
+            if (clone.GetComponent<DespawnAbove>() == null) clone.AddComponent<DespawnAbove>();
+            clonedAsteroid = clone;
         }
         else if (asteroidCount > maxAsteroids && (clonedAsteroid != null)) { Destroy(clonedAsteroid); }
-        else if (asteroidCount == 0) 
-        {
-            GameObject clone = Instantiate(asteroidPrefab, asteroidFirePoint.position, asteroidFirePoint.transform.rotation, rotationCenter);
-            Debug.Log("Max Asteroid count reached. Spawned asteroid " + i + ".");
-            clone.transform.RotateAround(rotationCenter.transform.position, Random.Range(0, 361));
-            clone.transform.Translate(0, asteroidSpawnDistance, 0);
-            if (clonedAsteroid != null) { clonedAsteroid = clone; }
-        }
         else if (clonedAsteroid == null)
         {
             return;
@@ -168,7 +183,6 @@ public class Spawner : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            int i;
             //Destroy(launchplatform);
 
             isColliding = true;
@@ -177,8 +191,8 @@ public class Spawner : MonoBehaviour
             Destroy(objectInstantiator);        //BIG CHANGE...CAUSING PROBLEMS?
             clone.transform.Translate(new Vector3(0, spawnerSpawnDistance, 0), Space.World);
 
-            for (i = 0; i <= maxSpawnerCount; i++) ;
-            if (i <= maxSpawnerCount) { objectInstantiator.SetActive(true); }
+            // 2026-11-19: removed `for (i = 0; i <= maxSpawnerCount; i++) ;` (1,000,001 empty steps on
+            // every pass) and the check after it, which could never be true once the loop finished.
              //else if (i> maxSpawnerCount) { Destroy(spawnedSpawnerParentTransform.GetChild(transform.childCount -1).gameObject); }
             //^---Would be good to destroy old spawners rather than simply set to inactive.
         }

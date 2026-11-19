@@ -88,7 +88,7 @@ public class HudStats : MonoBehaviour
 
     void LateUpdate()
     {
-        if (text == null) return;
+        if (text == null || Toolbox.instance == null) return;
         var ui = Toolbox.instance.m_uIManager;
         var gm = Toolbox.instance.m_gnomeMovement;
         bool show = ui != null && ui.State == UI_Manager.MenuState.Playing && gm != null && gm.isActiveAndEnabled;

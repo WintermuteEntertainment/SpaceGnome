@@ -4195,7 +4195,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6050435275779153605, guid: a5c3c3a9f596d2a4d8d8b6b8b92ec7cc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -50
       objectReference: {fileID: 0}
     - target: {fileID: 6050435275779153605, guid: a5c3c3a9f596d2a4d8d8b6b8b92ec7cc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4696,24 +4696,72 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: runSpeed
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: cineBrain
       value: 
       objectReference: {fileID: 1823688469}
     - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: fallSpeed
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: jumpSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: jumpGravity
       value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: playerSpeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: jumpHeight.y
+      value: 125
       objectReference: {fileID: 0}
     - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: baseJumpSpeed
       value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: boostJumpCost
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: diveTiltSpeed
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: boostLiftSpeed
       value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: turnSpeedDegrees
+      value: 280
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: defaultPlayerSpeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: diveBoostPerSecond
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: boostDrainPerSecond
+      value: 400
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: groundLossGraceSeconds
       value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1449485953526765327, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
+      propertyPath: airMoveRelativeToCamera
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1711392133877031190, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: mainCamera
@@ -4921,11 +4969,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8146818190180093171, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.0070667295
+      value: 0.0070667146
       objectReference: {fileID: 0}
     - target: {fileID: 8146818190180093171, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0012814421
+      value: -0.0012814396
       objectReference: {fileID: 0}
     - target: {fileID: 8146818190180093172, guid: 91c6d55797b6a2849ad40a16e7cac6cc, type: 3}
       propertyPath: m_Follow
@@ -5087,11 +5135,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3204303949439683256, guid: 7b4ba100d47c81f4da26eb1f5e590d77, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.0070667295
+      value: 0.0070667146
       objectReference: {fileID: 0}
     - target: {fileID: 3204303949439683256, guid: 7b4ba100d47c81f4da26eb1f5e590d77, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0012814421
+      value: -0.0012814396
       objectReference: {fileID: 0}
     - target: {fileID: 3204303949439683256, guid: 7b4ba100d47c81f4da26eb1f5e590d77, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5487,7 +5535,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 922565198}
   keepSceneOffset: 1
-  offset: {x: 0, y: -70, z: 0}
+  offset: {x: 0, y: -80, z: 0}
   sideSmoothing: 0.6
   spin: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807

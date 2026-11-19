@@ -75,6 +75,17 @@ public class Platforms : MonoBehaviour
 
     private void Awake()
     {
+        // 2026-11-18: only the copy on the gnome (with GnomeMovement) is real. Old prefabs
+        // (Platform.prefab has one, boostCost 500) carry stray copies; the Spawner drops those as
+        // junk without stripping them, and each one spawned its own dance floor on every X press
+        // (log: a second floor at y -22350). A stray copy now switches itself off before it
+        // creates any input.
+        if (GetComponent<GnomeMovement>() == null)
+        {
+            enabled = false;
+            Destroy(this);
+            return;
+        }
 
         clone = null;
         player1Controls = new SGInput();
@@ -248,11 +259,11 @@ public class Platforms : MonoBehaviour
     //}                                                     //Possibly cause of double platform spawning!
     void OnEnable()
     {
-        player1Controls.Player.Enable();
+        player1Controls?.Player.Enable();
     }
     void OnDisable()
     {
-        player1Controls.Player.Disable();
+        player1Controls?.Player.Disable();
     }
     void OnDestroy()
     {

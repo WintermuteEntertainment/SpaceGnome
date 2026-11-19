@@ -206,9 +206,40 @@ public class GnomeMovement : MonoBehaviour
     }
 
 
+    // Air steering (2026-11-18, playtest: "something awkward about the gnome rotation or right
+    // stick"). In the air the camera (vCam2) is fixed in world space, but the left stick moved him
+    // relative to his own facing, so after the right stick turned him, "up" could move him down
+    // the screen. Now in the air the left stick moves by SCREEN direction, and he turns to face the
+    // way he's moving unless the right stick is held. On the ground nothing changes.
+    [Header("Air steering (2026)")]
+    [Tooltip("In the air, left stick = screen directions (camera-relative). Off = 2023 behaviour (relative to his facing).")]
+    [SerializeField] bool airMoveRelativeToCamera = true;
+    [Tooltip("In the air, turn to face the movement direction when the right stick is idle.")]
+    [SerializeField] bool airFaceMoveDirection = true;
+
+    void AirMoveCameraRelative()
+    {
+        Vector2 stick = new Vector2(move.x, move.y);
+        if (stick.sqrMagnitude < 0.0001f) return;
+        var cam = Camera.main;
+        float yaw = cam != null ? cam.transform.eulerAngles.y : 0f;
+        Vector3 dir = Quaternion.Euler(0f, yaw, 0f) * new Vector3(stick.x, 0f, stick.y);
+        if (dir.sqrMagnitude > 1f) dir.Normalize();
+        transform.Translate(playerSpeed * Time.deltaTime * dir, Space.World);
+
+        bool rightStickHeld = new Vector2(look.x, look.y).magnitude >= lookDeadZone;
+        if (airFaceMoveDirection && !rightStickHeld && dir.sqrMagnitude > 0.04f)
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(dir, Vector3.up), turnSpeedDegrees * Time.deltaTime);
+    }
+
     void HandleMovement() //Move player transform based on Move Vector.
     {
         if (LandLocked) return; // still face-down from a hard landing
+        if (airMoveRelativeToCamera && m_floorCollider != null && !m_floorCollider.isStanding && (isJumping || isFallingIdle))
+        {
+            AirMoveCameraRelative();
+            return;
+        }
         if (isWalking || isJumping || isSprinting || isFallingIdle)
         {
             Vector3 m = playerSpeed * Time.deltaTime * new Vector3(move.x, move.z, move.y).normalized;
@@ -368,6 +399,17 @@ public class GnomeMovement : MonoBehaviour
         if (Toolbox.instance.m_coins != null) Toolbox.instance.m_coins.ResetCombo();
         if (fallDamageTracker != null) fallDamageTracker.OnLanded(transform.position.y);
         PlayLandingAnimation();
+    }
+
+    // These three lines ran EVERY frame (falling: 1 per frame, standing: 2 per frame). A build writes
+    // each one to Player.log with a stack trace, hundreds per second (2026-11-19, chasing build-only
+    // audio crackle). Now each is logged only when it differs from the previous state line.
+    string lastStateLog;
+    void LogState(string line)
+    {
+        if (line == lastStateLog) return;
+        lastStateLog = line;
+        Debug.Log(line);
     }
 
     // Landing animations (2026-11-18, Tim's picks from Animation/Animations/Dances):
@@ -882,7 +924,8 @@ public class GnomeMovement : MonoBehaviour
 
             if (isFallingIdle) { StopFallingIdle(); }
             if (isJumping) { StopJumping(); }
-            Debug.Log("isStanding = true;");
+            // (2023 logged "isStanding = true;" here every frame; it alternated with "Started Idling."
+            // so even change-only logging would repeat it. Removed; Land() already logs the landing.)
 
 
             //WALKING
@@ -916,7 +959,7 @@ public class GnomeMovement : MonoBehaviour
                 ResetStates();
                 Idle();
 
-                Debug.Log("Started Idling.");
+                LogState("Started Idling.");
 
 
             }
@@ -991,7 +1034,7 @@ public class GnomeMovement : MonoBehaviour
             isJumping = false;
             isSprinting = false;
             isDancing = false;
-            Debug.Log("Started Falling Idle.");
+            LogState("Started Falling Idle.");
             landingSoundPlayed = false;
         }
 
@@ -1080,6 +1123,7 @@ public class GnomeMovement : MonoBehaviour
     void OnGUI()
     {
         if (!showDebugReadout) return;
+        if (player1Controls == null || Toolbox.instance == null) return; // Play mode is ending
         var pm = Toolbox.instance != null ? Toolbox.instance.m_playerManager : null;
         string text =
             "move " + move.ToString("0.00") + "   look " + look.ToString("0.00") + "\n" +

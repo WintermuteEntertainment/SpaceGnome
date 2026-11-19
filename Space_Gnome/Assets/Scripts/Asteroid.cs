@@ -6,14 +6,36 @@ public class Asteroid : MonoBehaviour
 {
     public Transform rotationCenter;
     public GnomeMovement m_gnomeMovement;
+    [Tooltip("2023 value: degrees around the Earth PER FRAME. Now applied per second at 60 fps " +
+             "(rotationIncrements x 60), so the speed no longer depends on the frame rate.")]
     [SerializeField] float rotationIncrements;
     [SerializeField] GameObject earth;
     [SerializeField] private float asteroidFallSpeed;
 
-    [System.Obsolete]
+    // 2026-11-19 (performance): each asteroid was a DYNAMIC Rigidbody with gravity and no drag, so it
+    // kept accelerating forever, AND this script teleported it every frame, which forces a physics
+    // update per asteroid per frame. Its movement is entirely scripted, so the Rigidbody is now
+    // kinematic with gravity off. It still hits the gnome (his Rigidbody is dynamic), so the damage
+    // in Asteroids.cs is unchanged.
+    void Awake()
+    {
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.useGravity = false;
+            rb.isKinematic = true;
+        }
+    }
+
     private void Update()
     {
-        transform.RotateAround(earth.transform.position, m_gnomeMovement.fallSpeed * m_gnomeMovement.gravity * Time.deltaTime * rotationCenter.transform.position, rotationIncrements);
-        transform.Translate(asteroidFallSpeed * m_gnomeMovement.fallSpeed * m_gnomeMovement.gravity * Time.deltaTime * Vector3.down);
+        if (earth == null || m_gnomeMovement == null || rotationCenter == null) return;
+        float fall = m_gnomeMovement.fallSpeed * m_gnomeMovement.gravity;
+        // 2023 axis was fall * dt * rotationCenter.position: the direction of rotationCenter's
+        // position (flipped when fall is negative). dt only scaled its length, which RotateAround ignores.
+        Vector3 axis = rotationCenter.position * Mathf.Sign(fall);
+        if (axis.sqrMagnitude > 0.0001f)
+            transform.RotateAround(earth.transform.position, axis, rotationIncrements * 60f * Time.deltaTime);
+        transform.Translate(asteroidFallSpeed * fall * Time.deltaTime * Vector3.down);
     }
 }
